@@ -1,0 +1,14 @@
+{
+  "pins" : [
+    {
+      "identity" : "wireguard-apple",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/passepartoutvpn/wireguard-apple",
+      "state" : {
+        "revision" : "73d9152fa0cb661db0348a1ac11dbbf998422a50",
+        "version" : "1.0.17"
+      }
+    }
+  ],
+  "version" : 2
+}

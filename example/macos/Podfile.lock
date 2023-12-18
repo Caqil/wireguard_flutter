@@ -1,0 +1,23 @@
+PODS:
+  - FlutterMacOS (1.0.0)
+  - wireguard_flutter (0.0.1):
+    - Flutter
+    - FlutterMacOS
+
+DEPENDENCIES:
+  - FlutterMacOS (from `Flutter/ephemeral`)
+  - wireguard_flutter (from `Flutter/ephemeral/.symlinks/plugins/wireguard_flutter/darwin`)
+
+EXTERNAL SOURCES:
+  FlutterMacOS:
+    :path: Flutter/ephemeral
+  wireguard_flutter:
+    :path: Flutter/ephemeral/.symlinks/plugins/wireguard_flutter/darwin
+
+SPEC CHECKSUMS:
+  FlutterMacOS: 8f6f14fa908a6fb3fba0cd85dbd81ec4b251fb24
+  wireguard_flutter: 1e75469eaf86ae553566b6847bce070e3b3c315b
+
+PODFILE CHECKSUM: a78e73d4f3e93deb971b05a14aaf288280563573
+
+COCOAPODS: 1.13.0
