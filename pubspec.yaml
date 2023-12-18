@@ -1,12 +1,12 @@
 name: wireguard_flutter
 description: Wireguard Flutter SDK
-version: 0.0.1
+version: 0.0.2
 homepage: https://flutterflux.com
 repository: https://github.com/Caqil/wireguard_flutter
 
 environment:
-  sdk: '>=2.18.4 <4.0.0'
-  flutter: ">=2.5.0"
+  sdk: '>=3.0.0 <4.0.0'
+  flutter: '>=3.13.7'
 
 dependencies:
   flutter:
@@ -24,13 +24,9 @@ flutter:
       android:
         package: billion.group.wireguard_flutter
         pluginClass: WireguardFlutterPlugin
-      linux:
-        pluginClass: WireguardFlutterPlugin
       ios:
         pluginClass: WireguardFlutterPlugin
         sharedDarwinSource: true
       macos:
         pluginClass: WireguardFlutterPlugin
         sharedDarwinSource: true
-      windows:
-        pluginClass: WireguardFlutterPluginCApi
