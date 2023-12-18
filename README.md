@@ -1,4 +1,6 @@
-# wireguard_dart
+forked from mysterium Network
+
+# wireguard_flutter
 
 A flutter plugin to setup and control VPN connection via [Wireguard](https://www.wireguard.com/) tunnel.
 
@@ -8,7 +10,7 @@ A flutter plugin to setup and control VPN connection via [Wireguard](https://www
 
 ## Usage
 
-To use this plugin, add `wireguard_dart` as a [dependency in your pubspec.yaml file](https://flutter.dev/platform-plugins/).
+To use this plugin, add `wireguard_flutter` as a [dependency in your pubspec.yaml file](https://flutter.dev/platform-plugins/).
 
 ## Development
 
