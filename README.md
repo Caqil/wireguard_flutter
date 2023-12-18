@@ -1,4 +1,3 @@
-forked from mysterium Network
 
 # wireguard_flutter
 
