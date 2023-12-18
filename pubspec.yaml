@@ -1,0 +1,36 @@
+name: wireguard_flutter
+description: Wireguard Flutter SDK
+version: 0.4.2
+homepage: https://github.com/mysteriumnetwork/wireguard_dart
+repository: https://github.com/mysteriumnetwork/wireguard_dart
+
+environment:
+  sdk: '>=2.18.4 <3.0.0'
+  flutter: ">=2.5.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  plugin_platform_interface: ^2.0.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+
+flutter:
+  plugin:
+    platforms:
+      android:
+        package: billion.group.wireguard_flutter
+        pluginClass: WireguardFlutterPlugin
+      linux:
+        pluginClass: WireguardFlutterPlugin
+      ios:
+        pluginClass: WireguardFlutterPlugin
+        sharedDarwinSource: true
+      macos:
+        pluginClass: WireguardFlutterPlugin
+        sharedDarwinSource: true
+      windows:
+        pluginClass: WireguardFlutterPluginCApi
