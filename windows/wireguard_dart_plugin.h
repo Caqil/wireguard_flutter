@@ -6,6 +6,8 @@
 
 #include <memory>
 
+#include "service_control.h"
+
 namespace wireguard_dart {
 
 class WireguardDartPlugin : public flutter::Plugin {
@@ -17,14 +19,15 @@ class WireguardDartPlugin : public flutter::Plugin {
   virtual ~WireguardDartPlugin();
 
   // Disallow copy and assign.
-  WireguardDartPlugin(const WireguardDartPlugin&) = delete;
-  WireguardDartPlugin& operator=(const WireguardDartPlugin&) = delete;
+  WireguardDartPlugin(const WireguardDartPlugin &) = delete;
+  WireguardDartPlugin &operator=(const WireguardDartPlugin &) = delete;
 
  private:
   // Called when a method is called on this plugin's channel from Dart.
-  void HandleMethodCall(
-      const flutter::MethodCall<flutter::EncodableValue> &method_call,
-      std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result);
+  void HandleMethodCall(const flutter::MethodCall<flutter::EncodableValue> &method_call,
+                        std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result);
+
+  std::unique_ptr<ServiceControl> tunnel_service_;
 };
 
 }  // namespace wireguard_dart

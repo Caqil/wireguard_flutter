@@ -1,6 +1,6 @@
-# wireguard_dart_example
+# wireguard_flutter_example
 
-Demonstrates how to use the wireguard_dart plugin.
+Demonstrates how to use the wireguard_flutter plugin.
 
 ## Getting Started
 

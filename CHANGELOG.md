@@ -1,3 +1,8 @@
+
+## 0.0.7
+
+* Remove unused permission.
+
 ## 0.0.4
 
 * Add example.
