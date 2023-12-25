@@ -3,9 +3,9 @@
 
 A flutter plugin to setup and control VPN connection via [Wireguard](https://www.wireguard.com/) tunnel.
 
-|             | Android | iOS   | Linux | macOS | Windows     |
-|-------------|---------|-------|-------|-------|-------------|
-| **Support** | 21+     | 15.0+ | TBD   | 12+   | TBD         |
+|             | Android | iOS   | macOS | Windows |
+|-------------|---------|-------|-------|-------==|
+| **Support** | 21+     | 15.0+ | 12+   | TBD     |
 
 ## Usage
 
