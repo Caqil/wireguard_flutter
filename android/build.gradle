@@ -1,4 +1,4 @@
-group 'network.mysterium.wireguard_dart'
+group 'billion.group.wireguard_flutter'
 version '1.0-SNAPSHOT'
 
 buildscript {
@@ -44,7 +44,7 @@ android {
         minSdkVersion 21
     }
 
-    namespace 'network.mysterium.wireguard_dart'
+    namespace 'billion.group.wireguard_flutter'
 }
 
 dependencies {

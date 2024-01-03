@@ -1,4 +1,8 @@
 
+## 0.0.9
+
+* Remove unused code.
+
 ## 0.0.7
 
 * Remove unused permission.
