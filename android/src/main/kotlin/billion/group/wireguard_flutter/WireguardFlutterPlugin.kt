@@ -14,6 +14,9 @@ import android.app.Activity
 import io.flutter.embedding.android.FlutterActivity
 import android.content.Intent
 import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
+import android.os.Build
 import android.util.Log
 import com.beust.klaxon.Klaxon
 import com.wireguard.android.backend.*
@@ -48,7 +51,7 @@ class WireguardFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware,
     private var config: com.wireguard.config.Config? = null
     private var tunnel: WireGuardTunnel? = null
     private val TAG = "NVPN"
-    private var attached = true
+    var isVpnChecked = false
     companion object {
         private var state: String = ""
 
@@ -95,10 +98,12 @@ class WireguardFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware,
         channel.setMethodCallHandler(this)
         events.setStreamHandler(object : EventChannel.StreamHandler {
             override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
+                isVpnChecked = false
                 vpnStageSink = events
             }
 
             override fun onCancel(arguments: Any?) {
+                isVpnChecked = false
                 vpnStageSink = null
             }
         })
@@ -131,6 +136,7 @@ class WireguardFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware,
     }
 
     override fun onMethodCall(call: MethodCall, result: Result) {
+
         when (call.method) {
             "initialize" -> setupTunnel(call.argument<String>("localizedDescription").toString(), result)
             "start" -> {
@@ -138,9 +144,24 @@ class WireguardFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware,
             }
             "stop" -> {
                 disconnect(result)
-                updateStage("disconnected");
+                updateStage("disconnected")
             }
-            "stage" -> result.success(getStatus())
+            "stage" -> {
+                result.success(getStatus())
+                if (!isVpnChecked) {
+                    if (isVpnActive()) {
+                        updateStage("connected")
+                        isVpnChecked = true
+                        println("VPN is active")
+                    } else {
+                        updateStage("disconnected")
+                        isVpnChecked = true
+                        println("VPN is not active")
+                    }
+                }
+
+            }
+
             "checkPermission" -> {
                 checkPermission()
                 result.success(null)
@@ -148,7 +169,18 @@ class WireguardFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware,
             else -> flutterNotImplemented(result)
         }
     }
+    private fun isVpnActive(): Boolean {
+        val connectivityManager =
+            context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val activeNetwork = connectivityManager.activeNetwork
+            val networkCapabilities = connectivityManager.getNetworkCapabilities(activeNetwork)
+            return networkCapabilities?.hasTransport(NetworkCapabilities.TRANSPORT_VPN) == true
+        } else {
+            return false
+        }
+    }
     private fun updateStage(stage: String?) {
         val updatedStage = stage ?: "disconnect"
         vpnStageSink?.success(updatedStage.lowercase(Locale.ROOT))
@@ -242,6 +274,7 @@ class WireguardFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware,
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         channel.setMethodCallHandler(null)
         events.setStreamHandler(null)
+        isVpnChecked = false
     }
 
     private fun tunnel(name: String, callback: StateChangeCallback? = null): WireGuardTunnel {
