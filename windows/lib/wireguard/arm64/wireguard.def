@@ -1,0 +1,14 @@
+LIBRARY WIREGUARD 
+EXPORTS 
+WireGuardCloseAdapter 
+WireGuardCreateAdapter 
+WireGuardDeleteDriver 
+WireGuardGetAdapterLUID 
+WireGuardGetAdapterState 
+WireGuardGetConfiguration 
+WireGuardGetRunningDriverVersion 
+WireGuardOpenAdapter 
+WireGuardSetAdapterLogging 
+WireGuardSetAdapterState 
+WireGuardSetConfiguration 
+WireGuardSetLogger 

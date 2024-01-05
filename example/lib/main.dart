@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:developer' as developer;
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:wireguard_flutter/wireguard_flutter.dart';
@@ -26,6 +27,7 @@ class _MyAppState extends State<MyApp> {
     try {
       await wireGuardFlutter.initialize(
         localizedDescription: "wg_example",
+        win32ServiceName: 'wg_vpn',
       );
       debugPrint("initialize success");
     } catch (e) {
@@ -37,11 +39,20 @@ class _MyAppState extends State<MyApp> {
   }
 
   void startVpn() async {
-    await wireGuardFlutter.startVpn(
+    try {
+      await wireGuardFlutter.startVpn(
         serverAddress: '167.235.55.239:51820',
         wgQuickConfig: conf,
         providerBundleIdentifier: 'com.billion.wireguardvpn.WGExtension',
-        localizedDescription: 'wg_example');
+        localizedDescription: 'wg_example',
+        win32ServiceName: 'wg_vpn',
+      );
+    } catch (e) {
+      developer.log(
+        'startVpn tunnel',
+        error: e,
+      );
+    }
   }
 
   void disconnect() async {
