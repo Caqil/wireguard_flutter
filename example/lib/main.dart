@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:developer' as developer;
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:wireguard_flutter/wireguard_flutter.dart';
