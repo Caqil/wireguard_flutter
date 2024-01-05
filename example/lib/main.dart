@@ -49,7 +49,7 @@ class _MyAppState extends State<MyApp> {
     } catch (e) {
       developer.log(
         'startVpn tunnel',
-        error: e,
+        error: e.toString(),
       );
     }
   }

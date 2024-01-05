@@ -1,3 +1,4 @@
+import 'dart:io';
 
 import 'package:flutter/services.dart';
 
@@ -12,14 +13,14 @@ class WireGuardFlutter {
       .receiveBroadcastStream()
       .map((event) => event == vpnDenied ? vpnDisconnected : event);
 
-  Future<String> initialize(
-      {String? localizedDescription, String? win32ServiceName}) async {
+  Future<void> initialize(
+      {String? localizedDescription, String? win32ServiceName}) {
     return const MethodChannel(_methodChannelVpnControl)
         .invokeMethod("initialize", {
       "localizedDescription": localizedDescription!,
       "win32ServiceName": win32ServiceName,
     }).then((value) {
-      return stage();
+      stage();
     });
   }
 
@@ -29,15 +30,17 @@ class WireGuardFlutter {
       required String providerBundleIdentifier,
       String? localizedDescription,
       String? win32ServiceName}) async {
-    // await initialize(localizedDescription: localizedDescription);
-    const MethodChannel(_methodChannelVpnControl).invokeMethod("start", {
+    if (Platform.isAndroid || Platform.isIOS || Platform.isMacOS) {
+      await initialize(localizedDescription: localizedDescription);
+    }
+    return const MethodChannel(_methodChannelVpnControl).invokeMethod("start", {
       "serverAddress": serverAddress,
       "wgQuickConfig": wgQuickConfig,
       "providerBundleIdentifier": providerBundleIdentifier,
       "localizedDescription": localizedDescription,
       "win32ServiceName": win32ServiceName,
     }).then((value) {
-      // stage();
+      stage();
     });
   }
 

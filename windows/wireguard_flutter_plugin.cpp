@@ -1,7 +1,6 @@
 #include "wireguard_flutter_plugin.h"
 
 // This must be included before many other Windows headers.
-#include <flutter/method_channel.h>
 #include <flutter/event_channel.h>
 #include <flutter/plugin_registrar_windows.h>
 #include <flutter/standard_method_codec.h>
@@ -13,9 +12,7 @@
 
 #include "config_writer.h"
 #include "service_control.h"
-#include "tunnel.h"
 #include "utils.h"
-#include "wireguard.h"
 
 namespace wireguard_flutter
 {
@@ -44,18 +41,6 @@ namespace wireguard_flutter
     const auto *args = std::get_if<flutter::EncodableMap>(call.arguments());
 
     if (call.method_name() == "initialize")
-    {
-      const auto *arg_service_name = std::get_if<std::string>(ValueOrNull(*args, "win32ServiceName"));
-      if (arg_service_name == NULL)
-      {
-        result->Error("Argument 'win32ServiceName' is required");
-        return;
-      }
-      this->tunnel_service_ = std::make_unique<ServiceControl>(Utf8ToWide(*arg_service_name));
-      result->Success();
-      return;
-    }
-    if (call.method_name() == "stage")
     {
       const auto *arg_service_name = std::get_if<std::string>(ValueOrNull(*args, "win32ServiceName"));
       if (arg_service_name == NULL)
