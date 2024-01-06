@@ -1,0 +1,5 @@
+LIBRARY TUNNEL 
+EXPORTS 
+WireGuardGenerateKeypair 
+WireGuardTunnelService 
+_cgo_dummy_export 
