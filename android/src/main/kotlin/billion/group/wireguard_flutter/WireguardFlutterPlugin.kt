@@ -46,7 +46,7 @@ class WireguardFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware,
     private lateinit var context: Context
     private var activity: Activity? = null
     private var config: com.wireguard.config.Config? = null
-    private var tunnel: WireguardTunnel? = null
+    private var tunnel: WireGuardTunnel? = null
     private val TAG = "NVPN"
     private var attached = true
     companion object {
@@ -140,7 +140,6 @@ class WireguardFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware,
                 disconnect(result)
                 updateStage("disconnected");
             }
-            "getStats" -> handleGetStats(call.arguments, result)
             "stage" -> result.success(getStatus())
             "checkPermission" -> {
                 checkPermission()
@@ -154,37 +153,8 @@ class WireguardFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware,
         val updatedStage = stage ?: "disconnect"
         vpnStageSink?.success(updatedStage.lowercase(Locale.ROOT))
     }
-
-    private fun handleGetStats(arguments: Any?, result: Result) {
-        val tunnelName = arguments?.toString()
-        if (tunnelName.isNullOrEmpty()) {
-            flutterError(result, "Tunnel has not been initialized")
-            return
-        }
-        scope.launch(Dispatchers.IO) {
-            try {
-                val statistics = futureBackend.await().getStatistics(tunnel(tunnelName))
-                val stats = Stats(statistics.totalRx(), statistics.totalTx())
-
-                flutterSuccess(
-                    result, Klaxon().toJsonString(
-                        stats
-                    )
-                )
-                Log.i(TAG, "Statistics - ${stats.totalDownload} ${stats.totalUpload}")
-
-            } catch (e: BackendException) {
-                Log.e(TAG, "Statistics - BackendException - ERROR - ${e.reason} ", e)
-                flutterError(result, e.reason.toString())
-            } catch (e: Throwable) {
-                Log.e(TAG, "Statistics - Can't get stats: ${e.message}", e)
-                flutterError(result, e.message.toString())
-            }
-        }
-    }
-
     private fun disconnect(result: Result) {
-        setStage("disconnected")
+        updateStage("disconnected")
         scope.launch(Dispatchers.IO) {
             try {
                 if (futureBackend.await().runningTunnelNames.isEmpty()) {
@@ -198,7 +168,6 @@ class WireguardFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware,
                                 "onStateChange", state == Tunnel.State.DOWN
                             )
                             updateStage("disconnected")
-                            setStage("disconnected")
                         }
                     }, Tunnel.State.DOWN, config
                 )
@@ -215,7 +184,7 @@ class WireguardFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware,
     }
 
     private fun connect(wgQuickConfig: String, result: Result) {
-        setStage("connecting")
+        updateStage("connecting")
         scope.launch(Dispatchers.IO) {
             try {
                 if (!havePermission) {
@@ -275,26 +244,17 @@ class WireguardFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware,
         events.setStreamHandler(null)
     }
 
-    private fun setStage(stage: String) {
-        when (stage) {
-            "UP" -> if (vpnStageSink != null && attached) vpnStageSink?.success("connected")
-            "DOWN" -> if (vpnStageSink != null && attached) vpnStageSink?.success("disconnected")
-            "TOGGLE" -> if (vpnStageSink != null && attached) vpnStageSink?.success("authenticating")
-            else -> if (vpnStageSink != null && attached) vpnStageSink?.success("none")
-        }
-    }
-
-    private fun tunnel(name: String, callback: StateChangeCallback? = null): WireguardTunnel {
+    private fun tunnel(name: String, callback: StateChangeCallback? = null): WireGuardTunnel {
         if (tunnel == null) {
-            tunnel = WireguardTunnel(name, callback)
+            tunnel = WireGuardTunnel(name, callback)
         }
-        return tunnel as WireguardTunnel
+        return tunnel as WireGuardTunnel
     }
 }
 
 typealias StateChangeCallback = (Tunnel.State) -> Unit
 
-class WireguardTunnel(
+class WireGuardTunnel(
     private val name: String, private val onStateChanged: StateChangeCallback? = null
 ) : Tunnel {
 
@@ -305,9 +265,4 @@ class WireguardTunnel(
     }
 
 }
-
-class Stats(
-    val totalDownload: Long,
-    val totalUpload: Long,
-)
 
