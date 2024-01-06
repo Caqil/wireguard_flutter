@@ -1,3 +1,6 @@
+## 0.1.0
+
+* Fixed android connection state.
 
 ## 0.0.9
 
