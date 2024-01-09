@@ -98,7 +98,7 @@ namespace wireguard_flutter
       }
       catch (std::exception &e)
       {
-        result->Error(std::string(e.what()));
+        result->Error(std::string("Could not create tunnel").append(e.what()));
         return;
       }
 
@@ -108,7 +108,7 @@ namespace wireguard_flutter
       }
       catch (std::exception &e)
       {
-        result->Error(std::string(e.what()));
+        result->Error(std::string("Could not start tunnel").append(e.what()));
         return;
       }
 
@@ -131,7 +131,7 @@ namespace wireguard_flutter
       }
       catch (std::exception &e)
       {
-        result->Error(std::string(e.what()));
+        result->Error(std::string("Could not stop tunnel").append(e.what()));
         return;
       }
 
@@ -139,7 +139,7 @@ namespace wireguard_flutter
       return;
     }
 
-    if (call.method_name() == "stop")
+    if (call.method_name() == "stage")
     {
       // TODO: implement
       result->Success();
@@ -149,4 +149,4 @@ namespace wireguard_flutter
     result->NotImplemented();
   }
 
-} // namespace wireguard_dart
+} // namespace wireguard_flutter
