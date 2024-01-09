@@ -29,7 +29,10 @@ class WireGuardFlutter {
       String? localizedDescription,
       String? win32ServiceName}) async {
     // if (Platform.isAndroid || Platform.isIOS || Platform.isMacOS) {
-    await initialize(localizedDescription: localizedDescription);
+    await initialize(
+      localizedDescription: localizedDescription,
+      win32ServiceName: win32ServiceName,
+    );
     // }
     return const MethodChannel(_methodChannelVpnControl).invokeMethod("start", {
       "serverAddress": serverAddress,

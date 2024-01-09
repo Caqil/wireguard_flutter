@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:wireguard_flutter/wireguard_flutter.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const MaterialApp(home: Scaffold(body: MyApp())));
 }
 
 class MyApp extends StatefulWidget {
@@ -29,11 +29,16 @@ class _MyAppState extends State<MyApp> {
         win32ServiceName: 'wg_vpn',
       );
       debugPrint("initialize success");
-    } catch (e) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('init success')));
+    } catch (e, str) {
+      debugPrint('failed to initialize: $e\n$str');
       developer.log(
         'Setup tunnel',
         error: e,
       );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(e.toString())));
     }
   }
 
@@ -46,23 +51,33 @@ class _MyAppState extends State<MyApp> {
         localizedDescription: 'wg_example',
         win32ServiceName: 'wg_vpn',
       );
-    } catch (e) {
+      debugPrint('statement success');
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('start success')));
+    } catch (e, str) {
+      debugPrint('failed to start vpn: $e\n$str');
       developer.log(
         'startVpn tunnel',
         error: e.toString(),
       );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(e.toString())));
     }
   }
 
   void disconnect() async {
     try {
       await wireGuardFlutter.stopVpn();
-    } catch (e) {
-      debugPrint(e.toString());
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('stop success')));
+    } catch (e, str) {
+      debugPrint('failed to disconnect: $e\n$str');
       developer.log(
         'Disconnect',
         error: e.toString(),
       );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(e.toString())));
     }
   }
 

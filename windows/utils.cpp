@@ -63,4 +63,4 @@ namespace wireguard_flutter
     MessageBox(NULL, &ws[0], L"Debug", MB_OK);
   }
 
-} // namespace wireguard_dart
+} // namespace wireguard_flutter

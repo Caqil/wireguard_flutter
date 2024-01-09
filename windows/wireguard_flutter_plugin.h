@@ -30,6 +30,6 @@ class WireguardFlutterPlugin : public flutter::Plugin {
   std::unique_ptr<ServiceControl> tunnel_service_;
 };
 
-}  // namespace wireguard_dart
+}  // namespace wireguard_flutter
 
-#endif  // FLUTTER_PLUGIN_WIREGUARD_DART_PLUGIN_H_
+#endif  // FLUTTER_PLUGIN_WIREGUARD_FLUTTER_PLUGIN_H_

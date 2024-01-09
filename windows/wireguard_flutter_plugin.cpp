@@ -9,6 +9,8 @@
 
 #include <memory>
 #include <sstream>
+#include <wireguard.h>
+#include <tunnel.h>
 
 #include "config_writer.h"
 #include "service_control.h"
@@ -43,12 +45,34 @@ namespace wireguard_flutter
     if (call.method_name() == "initialize")
     {
       const auto *arg_service_name = std::get_if<std::string>(ValueOrNull(*args, "win32ServiceName"));
-      if (arg_service_name == NULL)
+      if (arg_service_name == nullptr)
       {
         result->Error("Argument 'win32ServiceName' is required");
         return;
       }
       this->tunnel_service_ = std::make_unique<ServiceControl>(Utf8ToWide(*arg_service_name));
+
+      // Disable packet forwarding that conflicts with WireGuard
+      ServiceControl remoteAccessService = ServiceControl(L"RemoteAccess");
+      try
+      {
+        remoteAccessService.Stop();
+      }
+      catch (std::exception &e)
+      {
+        result->Error(std::string("Could not stop packet forwarding: ").append(e.what()));
+        return;
+      }
+      try
+      {
+        remoteAccessService.Disable();
+      }
+      catch (std::exception &e)
+      {
+        result->Error(std::string("Could not disable packet forwarding: ").append(e.what()));
+        return;
+      }
+
       result->Success();
       return;
     }
@@ -58,11 +82,11 @@ namespace wireguard_flutter
       auto tunnel_service = this->tunnel_service_.get();
       if (tunnel_service == nullptr)
       {
-        result->Error("Invalid state: call 'setupTunnel' first");
+        result->Error("Invalid state: call 'initialize' first");
         return;
       }
       const auto *wgQuickConfig = std::get_if<std::string>(ValueOrNull(*args, "wgQuickConfig"));
-      if (wgQuickConfig == NULL)
+      if (wgQuickConfig == nullptr)
       {
         result->Error("Argument 'wgQuickConfig' is required");
         return;
@@ -83,22 +107,25 @@ namespace wireguard_flutter
       GetModuleFileName(NULL, module_filename, MAX_PATH);
       auto current_exec_dir = std::wstring(module_filename);
       current_exec_dir = current_exec_dir.substr(0, current_exec_dir.find_last_of(L"\\/"));
+      std::wcout << current_exec_dir << std::endl;
       std::wostringstream service_exec_builder;
       service_exec_builder << current_exec_dir << "\\wireguard_svc.exe" << L" -service"
                            << L" -config-file=\"" << wg_config_filename << "\"";
       std::wstring service_exec = service_exec_builder.str();
+      std::wcout << service_exec << std::endl;
       try
       {
-        CreateArgs csa = {};
+        CreateArgs csa;
         csa.description = tunnel_service->service_name_ + L" WireGuard tunnel";
         csa.executable_and_args = service_exec;
         csa.dependencies = L"Nsi\0TcpIp\0";
 
         tunnel_service->Create(csa);
+        std::wcout << "create tunnel" << std::endl;
       }
-      catch (std::exception &e)
+      catch (const std::exception &e)
       {
-        result->Error(std::string("Could not create tunnel").append(e.what()));
+        result->Error(std::string("Could not create tunnel: ").append(e.what()));
         return;
       }
 
@@ -108,7 +135,7 @@ namespace wireguard_flutter
       }
       catch (std::exception &e)
       {
-        result->Error(std::string("Could not start tunnel").append(e.what()));
+        result->Error(std::string("Could not start tunnel: ").append(e.what()));
         return;
       }
 
