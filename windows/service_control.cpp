@@ -18,9 +18,10 @@ namespace wireguard_flutter
     unsigned long *error_code_;
 
   public:
-    ServiceControlException(char *msg) : message_(msg) {}
+    ServiceControlException(char *msg) : message_(msg), error_code_(nullptr) {}
     ServiceControlException(char *msg, unsigned long errc) : message_(msg), error_code_(&errc) {}
-    const char *what()
+
+    const char *what() const noexcept override
     {
       if (error_code_ != nullptr)
       {
