@@ -132,8 +132,16 @@ namespace wireguard_flutter
       catch (std::exception &e)
       {
         result->Error(std::string(e.what()));
+        return;
       }
 
+      result->Success();
+      return;
+    }
+
+    if (call.method_name() == "stop")
+    {
+      // TODO: implement
       result->Success();
       return;
     }

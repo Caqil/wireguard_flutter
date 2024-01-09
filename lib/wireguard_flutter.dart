@@ -19,8 +19,8 @@ class WireGuardFlutter {
         .invokeMethod("initialize", {
       "localizedDescription": localizedDescription!,
       "win32ServiceName": win32ServiceName,
-    }).then((value) {
-      stage();
+    }).then((value) async {
+      await stage();
     });
   }
 
@@ -30,9 +30,9 @@ class WireGuardFlutter {
       required String providerBundleIdentifier,
       String? localizedDescription,
       String? win32ServiceName}) async {
-    if (Platform.isAndroid || Platform.isIOS || Platform.isMacOS) {
-      await initialize(localizedDescription: localizedDescription);
-    }
+    // if (Platform.isAndroid || Platform.isIOS || Platform.isMacOS) {
+    await initialize(localizedDescription: localizedDescription);
+    // }
     return const MethodChannel(_methodChannelVpnControl).invokeMethod("start", {
       "serverAddress": serverAddress,
       "wgQuickConfig": wgQuickConfig,
