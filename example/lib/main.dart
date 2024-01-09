@@ -140,14 +140,14 @@ class _MyAppState extends State<MyApp> {
 }
 
 const String conf = '''[Interface]
-PrivateKey = oBYGJwdyTr26QDn/21X8Lv4VwkENmnL0SoB+38Loomg=
-Address = 10.8.0.3/32
+PrivateKey = 0IZmHsxiNQ54TsUs0EQ71JNsa5f70zVf1LmDvON1CXc=
+Address = 10.8.0.4/32
 DNS = 1.1.1.1
 
 
 [Peer]
-PublicKey = 0IoSpwT2UJ/YVXXu00r9PVX8jD2VsWPXXxXGEFS0RBQ=
-PresharedKey = ysGiZHVPixmm/bY89/uDnvtO+dKC7A7FsmD1EQRp8VE=
+PublicKey = 6uZg6T0J1bHuEmdqPx8OmxQ2ebBJ8TnVpnCdV8jHliQ=
+PresharedKey = As6JiXcYcqwjSHxSOrmQT13uGVlBG90uXZWmtaezZVs=
 AllowedIPs = 0.0.0.0/0, ::/0
 PersistentKeepalive = 0
-Endpoint = 167.235.55.239:51820''';
+Endpoint = 38.180.13.85:51820''';
