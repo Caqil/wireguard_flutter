@@ -41,19 +41,23 @@ namespace wireguard_flutter
 
   void ServiceControl::Create(CreateArgs args)
   {
+    std::cout << "opening service" << std::endl;
     SC_HANDLE service_manager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
     if (service_manager == NULL)
     {
       throw ServiceControlException("Failed to open service manager", GetLastError());
     }
 
+    std::cout << "opening service" << std::endl;
     SC_HANDLE service = OpenService(service_manager, &service_name_[0], SC_MANAGER_ALL_ACCESS);
     if (service != NULL)
     {
+      std::cout << "deleting service" << std::endl;
       DeleteService(service);
       CloseServiceHandle(service);
     }
 
+    std::cout << "creating service" << std::endl;
     service = CreateService(service_manager,                  // SCM database
                             &service_name_[0],                // name of service
                             &service_name_[0],                // service name to display
@@ -64,7 +68,7 @@ namespace wireguard_flutter
                             args.executable_and_args.c_str(), // path to service's binary
                             NULL,                             // no load ordering group
                             NULL,                             // no tag identifier
-                            args.dependencies.c_str(),
+                            NULL, //args.dependencies.c_str(),
                             NULL, // LocalSystem account
                             NULL);
     if (service == NULL)
@@ -73,6 +77,7 @@ namespace wireguard_flutter
       throw ServiceControlException("Failed to create the service", GetLastError());
     }
 
+    std::cout << "setting sid type" << std::endl;
     auto sid_type = SERVICE_SID_TYPE_UNRESTRICTED;
     if (!ChangeServiceConfig2(service, SERVICE_CONFIG_SERVICE_SID_INFO, &sid_type))
     {
@@ -81,6 +86,7 @@ namespace wireguard_flutter
       throw ServiceControlException("Failed to configure servivce SID type", GetLastError());
     }
 
+    std::cout << "settings descp" << std::endl;
     SERVICE_DESCRIPTION description = {&args.description[0]};
     if (!ChangeServiceConfig2(service, SERVICE_CONFIG_DESCRIPTION, &description))
     {
@@ -89,33 +95,15 @@ namespace wireguard_flutter
       throw ServiceControlException("Failed to configure service description", GetLastError());
     }
 
-    CloseServiceHandle(service);
-    CloseServiceHandle(service_manager);
-  }
+    // CloseServiceHandle(service);
+    // CloseServiceHandle(service_manager);
+    // ENDS HERE
 
-  void ServiceControl::Start()
-  {
     SERVICE_STATUS_PROCESS ssStatus;
     DWORD dwBytesNeeded;
 
     std::cout << "Starting service m\n"
               << std::endl;
-    SC_HANDLE service_manager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
-    if (service_manager == NULL)
-    {
-      std::cout << "Failed to open service manager: " << GetLastError() << std::endl;
-      throw ServiceControlException("Failed to open service manager", GetLastError());
-    }
-
-    std::cout << "Opening service\n"
-              << std::endl;
-    SC_HANDLE service = OpenService(service_manager, this->service_name_.c_str(), SC_MANAGER_ALL_ACCESS);
-    if (service == NULL)
-    {
-      std::cout << "Failed to open service: " << this->service_name_.c_str() << GetLastError() << std::endl;
-      CloseServiceHandle(service_manager);
-      throw ServiceControlException("Failed to start: service does not exist");
-    }
 
     std::cout << "checking state" << std::endl;
     if (!QueryServiceStatusEx(
@@ -153,6 +141,68 @@ namespace wireguard_flutter
 
     CloseServiceHandle(service);
     CloseServiceHandle(service_manager);
+  }
+
+  void ServiceControl::Start()
+  {
+    // SERVICE_STATUS_PROCESS ssStatus;
+    // DWORD dwBytesNeeded;
+
+    // std::cout << "Starting service m\n"
+    //           << std::endl;
+    // SC_HANDLE service_manager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+    // if (service_manager == NULL)
+    // {
+    //   std::cout << "Failed to open service manager: " << GetLastError() << std::endl;
+    //   throw ServiceControlException("Failed to open service manager", GetLastError());
+    // }
+
+    // std::cout << "Opening service\n"
+    //           << std::endl;
+    // SC_HANDLE service = OpenService(service_manager, this->service_name_.c_str(), SC_MANAGER_ALL_ACCESS);
+    // if (service == NULL)
+    // {
+    //   std::cout << "Failed to open service: " << this->service_name_.c_str() << GetLastError() << std::endl;
+    //   CloseServiceHandle(service_manager);
+    //   throw ServiceControlException("Failed to start: service does not exist");
+    // }
+
+    // std::cout << "checking state" << std::endl;
+    // if (!QueryServiceStatusEx(
+    //         service,                        // handle to service
+    //         SC_STATUS_PROCESS_INFO,         // information level
+    //         (LPBYTE)&ssStatus,              // address of structure
+    //         sizeof(SERVICE_STATUS_PROCESS), // size of structure
+    //         &dwBytesNeeded))                // size needed if buffer is too small
+    // {
+    //   std::cout << "QueryServiceStatusEx failed (%d)\n" << GetLastError() << std::endl;
+    //   CloseServiceHandle(service);
+    //   CloseServiceHandle(service_manager);
+    //   return;
+    // }
+
+    // std::cout << "current state: " << ssStatus.dwCurrentState << std::endl;
+    // if (ssStatus.dwCurrentState != SERVICE_STOPPED && ssStatus.dwCurrentState != SERVICE_STOP_PENDING)
+    // {
+    //   std::cout << "Cannot start the service because it is already running\n" << std::endl;
+    //   CloseServiceHandle(service);
+    //   CloseServiceHandle(service_manager);
+    //   return;
+    // }
+
+    // std::cout << "Starting service " << this->service_name_.c_str() << std::endl;
+    // if (!StartService(service, 0, NULL))
+    // {
+    //   std::cout << "Failed to start the service: " << this->service_name_.c_str() << " " << GetLastError() << std::endl;
+    //   CloseServiceHandle(service);
+    //   CloseServiceHandle(service_manager);
+    //   throw ServiceControlException("Failed to start the service", GetLastError());
+    // }
+
+    // std::cout << "Service started" << std::endl;
+
+    // CloseServiceHandle(service);
+    // CloseServiceHandle(service_manager);
   }
 
   void ServiceControl::Stop()

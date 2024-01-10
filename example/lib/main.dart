@@ -22,11 +22,16 @@ class _MyAppState extends State<MyApp> {
     super.initState();
   }
 
+  late String name;
+  String get _randomName =>
+      'wg_vpn_${DateTime.now().millisecondsSinceEpoch.toStringAsFixed(3).replaceAll('.', '_')}';
+
   Future<void> initialize() async {
+    name = _randomName;
     try {
       await wireGuardFlutter.initialize(
         localizedDescription: "wg_example",
-        win32ServiceName: 'wg_vpn_2',
+        win32ServiceName: name,
       );
       debugPrint("initialize success");
     } catch (e) {
@@ -45,7 +50,7 @@ class _MyAppState extends State<MyApp> {
         wgQuickConfig: conf,
         providerBundleIdentifier: 'com.billion.wireguardvpn.WGExtension',
         localizedDescription: 'wg_example',
-        win32ServiceName: 'wg_vpn_2',
+        win32ServiceName: name,
       );
     } catch (e) {
       debugPrint("failed to start $e");
