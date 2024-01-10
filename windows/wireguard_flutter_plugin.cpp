@@ -83,15 +83,14 @@ namespace wireguard_flutter
       GetModuleFileName(NULL, module_filename, MAX_PATH);
       auto current_exec_dir = std::wstring(module_filename);
       current_exec_dir = current_exec_dir.substr(0, current_exec_dir.find_last_of(L"\\/"));
-      std::wostringstream service_exec_builder;
-      service_exec_builder << current_exec_dir << "\\wireguard_svc.exe" << L" -service"
-                           << L" -config-file=\"" << wg_config_filename << "\"";
-      std::wstring service_exec = service_exec_builder.str();
+      DWORD processId = GetCurrentProcessId();
+      std::wstring pathAndArgs = L"\"" + std::wstring(module_filename) + L"\" /service \"" + wg_config_filename + L"\" " + std::to_wstring(processId);
+      std::cout << "Starting service with command line: " << WideToAnsi(pathAndArgs) << std::endl;
       try
       {
         CreateArgs csa;
         csa.description = tunnel_service->service_name_ + L" WireGuard tunnel";
-        csa.executable_and_args = service_exec;
+        csa.executable_and_args = pathAndArgs;
         csa.dependencies = L"Nsi\0TcpIp\0";
 
         tunnel_service->Create(csa);

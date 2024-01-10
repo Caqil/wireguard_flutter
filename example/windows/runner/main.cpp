@@ -17,6 +17,24 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   // plugins.
   ::CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
 
+  // Check for the "/service" command-line argument
+  wchar_t** wargv;
+  int wargc;
+  wargv = CommandLineToArgvW(command_line, &wargc);
+
+  if (wargc == 3 && !wcscmp(wargv[1], L"/service")) {
+    HMODULE tunnel_lib = LoadLibrary(L"tunnel.dll");
+    if (!tunnel_lib)
+        abort();
+    BOOL (_cdecl *tunnel_proc)(_In_ LPCWSTR conf_file);
+    *(FARPROC*)&tunnel_proc = GetProcAddress(tunnel_lib, "WireGuardTunnelService");
+    if (!tunnel_proc)
+        abort();
+    return tunnel_proc(wargv[2]);
+  }
+
+  // Continue with the Flutter initialization code
+
   flutter::DartProject project(L"data");
 
   std::vector<std::string> command_line_arguments =

@@ -26,7 +26,7 @@ class _MyAppState extends State<MyApp> {
     try {
       await wireGuardFlutter.initialize(
         localizedDescription: "wg_example",
-        win32ServiceName: 'wg_vpn',
+        win32ServiceName: 'wg_vpn_2',
       );
       debugPrint("initialize success");
     } catch (e) {
@@ -45,7 +45,7 @@ class _MyAppState extends State<MyApp> {
         wgQuickConfig: conf,
         providerBundleIdentifier: 'com.billion.wireguardvpn.WGExtension',
         localizedDescription: 'wg_example',
-        win32ServiceName: 'wg_vpn',
+        win32ServiceName: 'wg_vpn_2',
       );
     } catch (e) {
       debugPrint("failed to start $e");
