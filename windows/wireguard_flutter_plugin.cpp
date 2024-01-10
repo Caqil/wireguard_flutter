@@ -89,7 +89,7 @@ namespace wireguard_flutter
       std::wstring service_exec = service_exec_builder.str();
       try
       {
-        CreateArgs csa = {};
+        CreateArgs csa;
         csa.description = tunnel_service->service_name_ + L" WireGuard tunnel";
         csa.executable_and_args = service_exec;
         csa.dependencies = L"Nsi\0TcpIp\0";
@@ -134,6 +134,12 @@ namespace wireguard_flutter
         result->Error(std::string(e.what()));
       }
 
+      result->Success();
+      return;
+    }
+
+    if (call.method_name() == "stage")
+    {
       result->Success();
       return;
     }

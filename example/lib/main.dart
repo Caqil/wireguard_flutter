@@ -30,6 +30,7 @@ class _MyAppState extends State<MyApp> {
       );
       debugPrint("initialize success");
     } catch (e) {
+      debugPrint("failed to initialize success $e");
       developer.log(
         'Setup tunnel',
         error: e,
@@ -47,6 +48,7 @@ class _MyAppState extends State<MyApp> {
         win32ServiceName: 'wg_vpn',
       );
     } catch (e) {
+      debugPrint("failed to start $e");
       developer.log(
         'startVpn tunnel',
         error: e.toString(),
