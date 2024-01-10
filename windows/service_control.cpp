@@ -24,13 +24,8 @@ namespace wireguard_flutter
 
     const char *what() const noexcept override
     {
-      std::stringstream ss;
-      ss << message_;
-      if (error_code_ != 0)
-      {
-        ss << " (Error Code: " << error_code_ << ")";
-      }
-      return ss.str().c_str();
+      std::string s = message_ + " (" + std::to_string(error_code_) + ")";
+      return s.c_str();
     }
 
     unsigned long GetErrorCode() const noexcept
@@ -39,7 +34,7 @@ namespace wireguard_flutter
     }
   };
 
-  void ServiceControl::Create(CreateArgs args)
+  void ServiceControl::CreateAndStart(CreateArgs args)
   {
     std::cout << "opening service" << std::endl;
     SC_HANDLE service_manager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
@@ -95,15 +90,8 @@ namespace wireguard_flutter
       throw ServiceControlException("Failed to configure service description", GetLastError());
     }
 
-    // CloseServiceHandle(service);
-    // CloseServiceHandle(service_manager);
-    // ENDS HERE
-
     SERVICE_STATUS_PROCESS ssStatus;
     DWORD dwBytesNeeded;
-
-    std::cout << "Starting service m\n"
-              << std::endl;
 
     std::cout << "checking state" << std::endl;
     if (!QueryServiceStatusEx(
@@ -141,68 +129,6 @@ namespace wireguard_flutter
 
     CloseServiceHandle(service);
     CloseServiceHandle(service_manager);
-  }
-
-  void ServiceControl::Start()
-  {
-    // SERVICE_STATUS_PROCESS ssStatus;
-    // DWORD dwBytesNeeded;
-
-    // std::cout << "Starting service m\n"
-    //           << std::endl;
-    // SC_HANDLE service_manager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
-    // if (service_manager == NULL)
-    // {
-    //   std::cout << "Failed to open service manager: " << GetLastError() << std::endl;
-    //   throw ServiceControlException("Failed to open service manager", GetLastError());
-    // }
-
-    // std::cout << "Opening service\n"
-    //           << std::endl;
-    // SC_HANDLE service = OpenService(service_manager, this->service_name_.c_str(), SC_MANAGER_ALL_ACCESS);
-    // if (service == NULL)
-    // {
-    //   std::cout << "Failed to open service: " << this->service_name_.c_str() << GetLastError() << std::endl;
-    //   CloseServiceHandle(service_manager);
-    //   throw ServiceControlException("Failed to start: service does not exist");
-    // }
-
-    // std::cout << "checking state" << std::endl;
-    // if (!QueryServiceStatusEx(
-    //         service,                        // handle to service
-    //         SC_STATUS_PROCESS_INFO,         // information level
-    //         (LPBYTE)&ssStatus,              // address of structure
-    //         sizeof(SERVICE_STATUS_PROCESS), // size of structure
-    //         &dwBytesNeeded))                // size needed if buffer is too small
-    // {
-    //   std::cout << "QueryServiceStatusEx failed (%d)\n" << GetLastError() << std::endl;
-    //   CloseServiceHandle(service);
-    //   CloseServiceHandle(service_manager);
-    //   return;
-    // }
-
-    // std::cout << "current state: " << ssStatus.dwCurrentState << std::endl;
-    // if (ssStatus.dwCurrentState != SERVICE_STOPPED && ssStatus.dwCurrentState != SERVICE_STOP_PENDING)
-    // {
-    //   std::cout << "Cannot start the service because it is already running\n" << std::endl;
-    //   CloseServiceHandle(service);
-    //   CloseServiceHandle(service_manager);
-    //   return;
-    // }
-
-    // std::cout << "Starting service " << this->service_name_.c_str() << std::endl;
-    // if (!StartService(service, 0, NULL))
-    // {
-    //   std::cout << "Failed to start the service: " << this->service_name_.c_str() << " " << GetLastError() << std::endl;
-    //   CloseServiceHandle(service);
-    //   CloseServiceHandle(service_manager);
-    //   throw ServiceControlException("Failed to start the service", GetLastError());
-    // }
-
-    // std::cout << "Service started" << std::endl;
-
-    // CloseServiceHandle(service);
-    // CloseServiceHandle(service_manager);
   }
 
   void ServiceControl::Stop()
@@ -338,6 +264,10 @@ namespace wireguard_flutter
       CloseServiceHandle(service_manager);
       throw ServiceControlException("Failed to disable service", GetLastError());
     }
+  }
+
+  std::string ServiceControl::GetStatus() {
+    return "TODO";
   }
 
 } // namespace wireguard_dart
