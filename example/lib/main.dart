@@ -27,7 +27,8 @@ class _MyAppState extends State<MyApp> {
       'wg_vpn_${DateTime.now().millisecondsSinceEpoch.toStringAsFixed(3).replaceAll('.', '_')}';
 
   Future<void> initialize() async {
-    name = _randomName;
+    // name = _randomName;
+    name = 'wg_vpn';
     try {
       await wireGuardFlutter.initialize(
         localizedDescription: "wg_example",

@@ -36,7 +36,7 @@ namespace wireguard_flutter
 
   void ServiceControl::CreateAndStart(CreateArgs args)
   {
-    std::cout << "opening service" << std::endl;
+    std::cout << "opening service manager" << std::endl;
     SC_HANDLE service_manager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
     if (service_manager == NULL)
     {
@@ -267,7 +267,61 @@ namespace wireguard_flutter
   }
 
   std::string ServiceControl::GetStatus() {
-    return "TODO";
+    std::cout << "opening service manager" << std::endl;
+    SC_HANDLE service_manager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+    if (service_manager == NULL)
+    {
+      throw ServiceControlException("Failed to open service manager", GetLastError());
+    }
+
+    std::cout << "opening service" << std::endl;
+    SC_HANDLE service = OpenService(service_manager, &service_name_[0], SC_MANAGER_ALL_ACCESS);
+    if (service == NULL)
+    {
+      CloseServiceHandle(service_manager);
+      CloseServiceHandle(service);
+      return "disconnected";
+    }
+
+    SERVICE_STATUS_PROCESS ssStatus;
+    DWORD dwBytesNeeded;
+
+    std::cout << "checking state" << std::endl;
+    if (!QueryServiceStatusEx(
+            service,                        // handle to service
+            SC_STATUS_PROCESS_INFO,         // information level
+            (LPBYTE)&ssStatus,              // address of structure
+            sizeof(SERVICE_STATUS_PROCESS), // size of structure
+            &dwBytesNeeded))                // size needed if buffer is too small
+    {
+      std::cout << "QueryServiceStatusEx failed (%d)\n" << GetLastError() << std::endl;
+      CloseServiceHandle(service);
+      CloseServiceHandle(service_manager);
+      return "denied";
+    }
+
+    std::cout << "current state: " << ssStatus.dwCurrentState << std::endl;
+    if (ssStatus.dwCurrentState == SERVICE_STOPPED)
+    {
+      return "disconnected";
+    } else if (ssStatus.dwCurrentState == SERVICE_STOP_PENDING) {
+      return "disconnecting";
+    } else if (ssStatus.dwCurrentState == SERVICE_START_PENDING) {
+      return "connecting";
+    } else if (ssStatus.dwCurrentState == SERVICE_RUNNING) {
+      return "connected";
+    } else if (ssStatus.dwCurrentState == SERVICE_CONTINUE_PENDING) {
+      return "reconnecting";
+    } else if (ssStatus.dwCurrentState == SERVICE_PAUSE_PENDING) {
+      return "disconnecting";
+    } else if (ssStatus.dwCurrentState == SERVICE_PAUSED) {
+      return "disconnected";
+    }
+
+    CloseServiceHandle(service);
+    CloseServiceHandle(service_manager);
+
+    return "no_connection";
   }
 
 } // namespace wireguard_dart
