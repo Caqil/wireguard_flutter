@@ -7,6 +7,7 @@
 #include <cstring>
 
 #include "wireguard_flutter_plugin_private.h"
+#include "wireguard.h"
 
 #define WIREGUARD_FLUTTER_PLUGIN(obj) \
   (G_TYPE_CHECK_INSTANCE_CAST((obj), wireguard_flutter_plugin_get_type(), \
@@ -26,8 +27,11 @@ static void wireguard_flutter_plugin_handle_method_call(
 
   const gchar* method = fl_method_call_get_name(method_call);
 
-  if (strcmp(method, "getPlatformVersion") == 0) {
+  if (strcmp(method, "initialize") == 0) {
     response = get_platform_version();
+  } else if (strcmp(method, "start") == 0) {
+  } else if (strcmp(method, "stop") == 0) {
+  } else if (strcmp(method, "stage") == 0) {
   } else {
     response = FL_METHOD_RESPONSE(fl_method_not_implemented_response_new());
   }

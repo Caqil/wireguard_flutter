@@ -32,3 +32,5 @@ flutter:
         sharedDarwinSource: true
       windows:
         pluginClass: WireguardFlutterPluginCApi
+      linux:
+        pluginClass: WireguardFlutterPlugin
