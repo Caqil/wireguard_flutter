@@ -31,6 +31,6 @@ class ServiceControl {
   void EmitState(std::string state);
 };
 
-}  // namespace wireguard_dart
+}  // namespace wireguard_flutter
 
 #endif

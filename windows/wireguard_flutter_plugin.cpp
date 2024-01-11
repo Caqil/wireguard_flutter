@@ -205,4 +205,4 @@ namespace wireguard_flutter
     return nullptr;
   }
 
-} // namespace wireguard_dart
+} // namespace wireguard_flutter

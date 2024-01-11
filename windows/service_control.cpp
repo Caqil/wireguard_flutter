@@ -322,4 +322,4 @@ namespace wireguard_flutter
     events_->Success(flutter::EncodableValue(state));
   }
 
-} // namespace wireguard_dart
+} // namespace wireguard_flutter

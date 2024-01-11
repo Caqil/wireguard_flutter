@@ -20,4 +20,4 @@ FLUTTER_PLUGIN_EXPORT void WireguardFlutterPluginCApiRegisterWithRegistrar(
 }  // extern "C"
 #endif
 
-#endif  // FLUTTER_PLUGIN_WIREGUARD_DART_PLUGIN_C_API_H_
+#endif  // FLUTTER_PLUGIN_WIREGUARD_FLUTTER_PLUGIN_C_API_H_
