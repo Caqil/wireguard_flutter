@@ -35,6 +35,7 @@ namespace wireguard_flutter
                           std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result);
 
     std::unique_ptr<ServiceControl> tunnel_service_;
+    std::unique_ptr<flutter::EventSink<flutter::EncodableValue>> events_;
 
     std::unique_ptr<flutter::StreamHandlerError<flutter::EncodableValue>> OnListen(
         const flutter::EncodableValue *arguments,

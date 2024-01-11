@@ -20,6 +20,9 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
+    wireGuardFlutter.vpnStageSnapshot().listen((event) {
+      debugPrint("status changed $event");
+    });
   }
 
   late String name;

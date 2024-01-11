@@ -1,5 +1,11 @@
 #include "service_control.h"
 
+#include <flutter/standard_method_codec.h>
+#include <flutter/event_channel.h>
+#include <flutter/event_stream_handler.h>
+#include <flutter/event_stream_handler_functions.h>
+#include <flutter/encodable_value.h>
+
 #include <windows.h>
 
 #include <stdexcept>
@@ -49,6 +55,7 @@ namespace wireguard_flutter
     {
       CloseServiceHandle(service);
 
+      EmitState("connecting");
       std::cout << "creating service" << std::endl;
       service = CreateService(service_manager,                  // SCM database
                               &service_name_[0],                // name of service
@@ -116,6 +123,8 @@ namespace wireguard_flutter
       return;
     }
 
+    EmitState("connecting");
+
     std::cout << "Starting service " << this->service_name_.c_str() << std::endl;
     if (!StartService(service, 0, NULL))
     {
@@ -126,6 +135,7 @@ namespace wireguard_flutter
     }
 
     std::cout << "Service started" << std::endl;
+    EmitState("connected");
 
     CloseServiceHandle(service);
     CloseServiceHandle(service_manager);
@@ -146,6 +156,8 @@ namespace wireguard_flutter
       return;
     }
 
+    EmitState("disconnecting");
+
     SERVICE_STATUS_PROCESS service_status;
     DWORD service_status_bytes_needed;
     if (!QueryServiceStatusEx(service, SC_STATUS_PROCESS_INFO, (LPBYTE)&service_status, sizeof(SERVICE_STATUS_PROCESS),
@@ -157,6 +169,7 @@ namespace wireguard_flutter
     }
     if (service_status.dwCurrentState == SERVICE_STOPPED)
     {
+      EmitState("disconnected");
       CloseServiceHandle(service);
       CloseServiceHandle(service_manager);
       return;
@@ -188,6 +201,7 @@ namespace wireguard_flutter
 
       if (service_status.dwCurrentState == SERVICE_STOPPED)
       {
+        EmitState("disconnected");
         CloseServiceHandle(service);
         CloseServiceHandle(service_manager);
         return;
@@ -224,6 +238,7 @@ namespace wireguard_flutter
 
       if (service_status.dwCurrentState == SERVICE_STOPPED)
       {
+        EmitState("disconnected");
         CloseServiceHandle(service);
         CloseServiceHandle(service_manager);
         return;
@@ -239,31 +254,6 @@ namespace wireguard_flutter
 
     CloseServiceHandle(service);
     CloseServiceHandle(service_manager);
-  }
-
-  void ServiceControl::Disable()
-  {
-    SC_HANDLE service_manager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
-    if (service_manager == NULL)
-    {
-      throw ServiceControlException("Failed to open service manager", GetLastError());
-    }
-
-    SC_HANDLE service = OpenService(service_manager, &service_name_[0], SERVICE_CHANGE_CONFIG);
-    if (service == NULL)
-    {
-      CloseServiceHandle(service_manager);
-      return;
-    }
-
-    auto service_start_type = SERVICE_DISABLED;
-    if (!ChangeServiceConfig(service, SERVICE_NO_CHANGE, service_start_type, SERVICE_NO_CHANGE, NULL, NULL, NULL, NULL,
-                             NULL, NULL, NULL))
-    {
-      CloseServiceHandle(service);
-      CloseServiceHandle(service_manager);
-      throw ServiceControlException("Failed to disable service", GetLastError());
-    }
   }
 
   std::string ServiceControl::GetStatus()
@@ -302,12 +292,15 @@ namespace wireguard_flutter
       return "denied";
     }
 
+    CloseServiceHandle(service);
+    CloseServiceHandle(service_manager);
+
     std::cout << "current state: " << ssStatus.dwCurrentState << std::endl;
-    if (ssStatus.dwCurrentState == SERVICE_STOPPED)
+    if (ssStatus.dwCurrentState == SERVICE_STOPPED || ssStatus.dwCurrentState == SERVICE_PAUSED)
     {
       return "disconnected";
     }
-    else if (ssStatus.dwCurrentState == SERVICE_STOP_PENDING)
+    else if (ssStatus.dwCurrentState == SERVICE_STOP_PENDING || ssStatus.dwCurrentState == SERVICE_PAUSE_PENDING)
     {
       return "disconnecting";
     }
@@ -323,38 +316,25 @@ namespace wireguard_flutter
     {
       return "reconnecting";
     }
-    else if (ssStatus.dwCurrentState == SERVICE_PAUSE_PENDING)
-    {
-      return "disconnecting";
-    }
-    else if (ssStatus.dwCurrentState == SERVICE_PAUSED)
-    {
-      return "disconnected";
-    }
-
-    CloseServiceHandle(service);
-    CloseServiceHandle(service_manager);
 
     return "no_connection";
   }
 
-  void ServiceControl::RegisterListener()
+  void ServiceControl::RegisterListener(std::unique_ptr<flutter::EventSink<flutter::EncodableValue>> &&events)
   {
-    std::cout << "registering listener" << std::endl;
-    SC_HANDLE service_manager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
-    if (service_manager == NULL)
-    {
-      throw ServiceControlException("Failed to open service manager", GetLastError());
-    }
+    events_ = std::move(events);
+  }
 
-    std::cout << "opening service" << std::endl;
-    SC_HANDLE service = OpenService(service_manager, &service_name_[0], SC_MANAGER_ALL_ACCESS);
-    if (service == NULL)
-    {
-      CloseServiceHandle(service_manager);
-      CloseServiceHandle(service);
+  void ServiceControl::UnregisterListener() {
+    events_ = nullptr;
+  }
+
+  void ServiceControl::EmitState(std::string state) {
+    std::cout << "EmitState: " << state << std::endl;
+    if (events_ == nullptr) {
       return;
     }
+    events_->Success(flutter::EncodableValue(state));
   }
 
 } // namespace wireguard_dart
