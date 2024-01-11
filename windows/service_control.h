@@ -15,10 +15,10 @@ class ServiceControl {
 
   ServiceControl(const std::wstring service_name) : service_name_(service_name) {}
 
-  void Create(CreateArgs args);
-  void Start();
+  void CreateAndStart(CreateArgs args);
   void Stop();
   void Disable();
+  std::string GetStatus();
 };
 
 }  // namespace wireguard_dart

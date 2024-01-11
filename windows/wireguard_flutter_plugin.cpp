@@ -52,8 +52,7 @@ namespace wireguard_flutter
       result->Success();
       return;
     }
-
-    if (call.method_name() == "start")
+    else if (call.method_name() == "start")
     {
       auto tunnel_service = this->tunnel_service_.get();
       if (tunnel_service == nullptr)
@@ -87,24 +86,15 @@ namespace wireguard_flutter
       service_exec_builder << current_exec_dir << "\\wireguard_svc.exe" << L" -service"
                            << L" -config-file=\"" << wg_config_filename << "\"";
       std::wstring service_exec = service_exec_builder.str();
+      std::cout << "Starting service with command line: " << WideToAnsi(service_exec) << std::endl;
       try
       {
-        CreateArgs csa = {};
+        CreateArgs csa;
         csa.description = tunnel_service->service_name_ + L" WireGuard tunnel";
         csa.executable_and_args = service_exec;
         csa.dependencies = L"Nsi\0TcpIp\0";
 
-        tunnel_service->Create(csa);
-      }
-      catch (std::exception &e)
-      {
-        result->Error(std::string(e.what()));
-        return;
-      }
-
-      try
-      {
-        tunnel_service->Start();
+        tunnel_service->CreateAndStart(csa);
       }
       catch (std::exception &e)
       {
@@ -115,8 +105,7 @@ namespace wireguard_flutter
       result->Success();
       return;
     }
-
-    if (call.method_name() == "stop")
+    else if (call.method_name() == "stop")
     {
       auto tunnel_service = this->tunnel_service_.get();
       if (tunnel_service == nullptr)
@@ -135,6 +124,18 @@ namespace wireguard_flutter
       }
 
       result->Success();
+      return;
+    }
+    else if (call.method_name() == "stage")
+    {
+      auto tunnel_service = this->tunnel_service_.get();
+      if (tunnel_service == nullptr)
+      {
+        result->Error("Invalid state: call 'setupTunnel' first");
+        return;
+      }
+
+      result->Success(tunnel_service->GetStatus());
       return;
     }
 

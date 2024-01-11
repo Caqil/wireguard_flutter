@@ -22,14 +22,21 @@ class _MyAppState extends State<MyApp> {
     super.initState();
   }
 
+  late String name;
+  // String get _randomName =>
+  //     'wg_vpn_${DateTime.now().millisecondsSinceEpoch.toStringAsFixed(3).replaceAll('.', '_')}';
+
   Future<void> initialize() async {
+    // name = _randomName;
+    name = 'wg_vpn';
     try {
       await wireGuardFlutter.initialize(
         localizedDescription: "wg_example",
-        win32ServiceName: 'wg_vpn',
+        win32ServiceName: name,
       );
       debugPrint("initialize success");
     } catch (e) {
+      debugPrint("failed to initialize success $e");
       developer.log(
         'Setup tunnel',
         error: e,
@@ -44,9 +51,10 @@ class _MyAppState extends State<MyApp> {
         wgQuickConfig: conf,
         providerBundleIdentifier: 'com.billion.wireguardvpn.WGExtension',
         localizedDescription: 'wg_example',
-        win32ServiceName: 'wg_vpn',
+        win32ServiceName: name,
       );
     } catch (e) {
+      debugPrint("failed to start $e");
       developer.log(
         'startVpn tunnel',
         error: e.toString(),
@@ -64,6 +72,13 @@ class _MyAppState extends State<MyApp> {
         error: e.toString(),
       );
     }
+  }
+
+  void getStatus() {
+    debugPrint("getting stage");
+    wireGuardFlutter.stage().then((value) {
+      debugPrint("stage $value");
+    });
   }
 
   @override
@@ -128,6 +143,23 @@ class _MyAppState extends State<MyApp> {
                         Colors.white.withOpacity(0.1))),
                 child: const Text(
                   'Disconnect',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+              const SizedBox(height: 20),
+              TextButton(
+                onPressed: getStatus,
+                style: ButtonStyle(
+                    minimumSize:
+                        MaterialStateProperty.all<Size>(const Size(100, 50)),
+                    padding: MaterialStateProperty.all(
+                        const EdgeInsets.fromLTRB(20, 15, 20, 15)),
+                    backgroundColor:
+                        MaterialStateProperty.all<Color>(Colors.blueAccent),
+                    overlayColor: MaterialStateProperty.all<Color>(
+                        Colors.white.withOpacity(0.1))),
+                child: const Text(
+                  'Get status',
                   style: TextStyle(color: Colors.white),
                 ),
               ),
