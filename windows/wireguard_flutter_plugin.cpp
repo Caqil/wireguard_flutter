@@ -22,12 +22,14 @@ namespace wireguard_flutter
   {
     auto channel = std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
         registrar->messenger(), "billion.group.wireguard_flutter/wgcontrol", &flutter::StandardMethodCodec::GetInstance());
+    auto eventChannel = std::make_unique<flutter::EventChannel<flutter::EncodableValue>>(
+        registrar->messenger(), "billion.group.wireguard_flutter/wgstage", &flutter::StandardMethodCodec::GetInstance());
 
     auto plugin = std::make_unique<WireguardFlutterPlugin>();
 
     channel->SetMethodCallHandler([plugin_pointer = plugin.get()](const auto &call, auto result)
                                   { plugin_pointer->HandleMethodCall(call, std::move(result)); });
-
+    // eventChannel->SetStreamHandler(std::make_unique<MyStreamHandler>());
     registrar->AddPlugin(std::move(plugin));
   }
 

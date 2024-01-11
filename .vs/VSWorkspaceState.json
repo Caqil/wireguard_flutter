@@ -1,0 +1,12 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\example",
+    "\\example\\lib",
+    "\\example\\windows",
+    "\\example\\windows\\runner",
+    "\\windows"
+  ],
+  "SelectedNode": "\\windows\\wireguard_flutter_plugin.cpp",
+  "PreviewInSolutionExplorer": false
+}
