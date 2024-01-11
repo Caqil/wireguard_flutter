@@ -338,4 +338,23 @@ namespace wireguard_flutter
     return "no_connection";
   }
 
+  void ServiceControl::RegisterListener()
+  {
+    std::cout << "registering listener" << std::endl;
+    SC_HANDLE service_manager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+    if (service_manager == NULL)
+    {
+      throw ServiceControlException("Failed to open service manager", GetLastError());
+    }
+
+    std::cout << "opening service" << std::endl;
+    SC_HANDLE service = OpenService(service_manager, &service_name_[0], SC_MANAGER_ALL_ACCESS);
+    if (service == NULL)
+    {
+      CloseServiceHandle(service_manager);
+      CloseServiceHandle(service);
+      return;
+    }
+  }
+
 } // namespace wireguard_dart

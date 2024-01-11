@@ -19,6 +19,7 @@ class ServiceControl {
   void Stop();
   void Disable();
   std::string GetStatus();
+  void RegisterListener();
 };
 
 }  // namespace wireguard_dart
