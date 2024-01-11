@@ -302,17 +302,26 @@ namespace wireguard_flutter
 
   void ServiceControl::RegisterListener(std::unique_ptr<flutter::EventSink<flutter::EncodableValue>> &&events)
   {
-    events_ = std::move(events);
+    if (events_ == nullptr)
+    {
+      events_ = std::move(events);
+      std::cout << "Registering listener" << events_ << std::endl;
+    }
   }
 
-  void ServiceControl::UnregisterListener() {
+  void ServiceControl::UnregisterListener()
+  {
     events_ = nullptr;
-  }
+    }
 
-  void ServiceControl::EmitState(std::string state) {
-    if (events_ == nullptr) {
+  void ServiceControl::EmitState(std::string state)
+  {
+    std::cout << "Emitting state: " << state << " for " << events_ << std::endl;
+    if (events_ == nullptr)
+    {
       return;
     }
+    std::cout << "Emitting state: " << state << std::endl;
     events_->Success(flutter::EncodableValue(state));
   }
 

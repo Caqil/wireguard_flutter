@@ -73,8 +73,16 @@ namespace wireguard_flutter
         result->Error("Argument 'win32ServiceName' is required");
         return;
       }
-      this->tunnel_service_ = make_unique<ServiceControl>(Utf8ToWide(*arg_service_name));
-      this->tunnel_service_->RegisterListener(move(events_));
+      if (this->tunnel_service_ != nullptr)
+      {
+        this->tunnel_service_->service_name_ = Utf8ToWide(*arg_service_name);
+      }
+      else
+      {
+        this->tunnel_service_ = make_unique<ServiceControl>(Utf8ToWide(*arg_service_name));
+        this->tunnel_service_->RegisterListener(move(events_));
+      }
+
       result->Success();
       return;
     }
@@ -176,7 +184,7 @@ namespace wireguard_flutter
     auto tunnel_service = this->tunnel_service_.get();
     if (tunnel_service != nullptr)
     {
-      tunnel_service->RegisterListener(move(events));
+      tunnel_service->RegisterListener(move(events_));
       return nullptr;
     }
 

@@ -19,8 +19,6 @@ class WireGuardFlutter {
     return _methodChannel.invokeMethod("initialize", {
       "localizedDescription": localizedDescription,
       "win32ServiceName": win32ServiceName,
-    }).then((value) {
-      stage();
     });
   }
 

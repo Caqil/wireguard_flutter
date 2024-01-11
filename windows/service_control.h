@@ -18,7 +18,7 @@ struct CreateArgs {
 
 class ServiceControl {
  public:
-  const std::wstring service_name_;
+  std::wstring service_name_;
   std::unique_ptr<flutter::EventSink<flutter::EncodableValue>> events_;
 
   ServiceControl(const std::wstring service_name) : service_name_(service_name) {}
