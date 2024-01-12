@@ -23,7 +23,7 @@ flutter pub add wireguard_flutter
 Initialize a wireguard instance with a name using `initialize`:
 
 ```dart
-final wireguard = WireGuardFlutter();
+final wireguard = WireGuardFlutter.instance;
 
 // initialize the interface
 await wireguard.initialize(interfaceName: 'wg0');

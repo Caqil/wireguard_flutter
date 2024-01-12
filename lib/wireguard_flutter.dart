@@ -9,6 +9,10 @@ import 'wireguard_flutter_platform_interface.dart';
 class WireGuardFlutter extends WireGuardFlutterInterface {
   static WireGuardFlutterInterface? __instance;
   static WireGuardFlutterInterface get _instance => __instance!;
+  static WireGuardFlutterInterface get instance {
+    registerWith();
+    return _instance;
+  }
 
   static void registerWith() {
     if (__instance == null) {
@@ -22,9 +26,7 @@ class WireGuardFlutter extends WireGuardFlutterInterface {
     }
   }
 
-  WireGuardFlutter() {
-    registerWith();
-  }
+  WireGuardFlutter._();
 
   @override
   Stream<String> get vpnStageSnapshot => _instance.vpnStageSnapshot;

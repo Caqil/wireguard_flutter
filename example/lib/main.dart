@@ -24,7 +24,7 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  final wireguard = WireGuardFlutter();
+  final wireguard = WireGuardFlutter.instance;
 
   late String name;
 
