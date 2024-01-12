@@ -24,6 +24,6 @@ std::wstring AnsiToWide(const std::string &str);
 // Pops a message box (useful for debugging native code)
 void DebugMessageBox(const char* msg);
 
-}  // namespace wireguard_dart
+}  // namespace wireguard_flutter
 
 #endif

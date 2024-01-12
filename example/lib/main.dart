@@ -22,7 +22,7 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     wireGuardFlutter.vpnStageSnapshot().listen((event) {
-      debugPrint('event $event');
+      debugPrint("status changed $event");
     });
   }
 

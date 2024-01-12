@@ -89,3 +89,5 @@ set(wireguard_flutter_bundled_libraries
   "${CMAKE_CURRENT_SOURCE_DIR}/lib/wireguard_svc/amd64/wireguard_svc.exe"
   PARENT_SCOPE
 )
+
+SET_TARGET_PROPERTIES(${BINARY_NAME} PROPERTIES LINK_FLAGS "/MANIFESTUAC:\"level='requireAdministrator' uiAccess='false'\" /SUBSYSTEM:WINDOWS")
