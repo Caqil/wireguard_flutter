@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
+import 'package:wireguard_flutter/linux/wireguard_flutter_linux.dart';
 import 'package:wireguard_flutter/wireguard_flutter.dart';
 
 void main() {
@@ -16,7 +17,7 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  final wireGuardFlutter = WireGuardFlutter();
+  final WireGuardFlutter wireGuardFlutter = WireGuardFlutterLinux();
   @override
   void initState() {
     super.initState();
@@ -31,7 +32,7 @@ class _MyAppState extends State<MyApp> {
     name = 'wg_vpn';
     try {
       await wireGuardFlutter.initialize(
-        localizedDescription: "wg_example",
+        localizedDescription: name,
         win32ServiceName: name,
       );
       debugPrint("initialize success");
