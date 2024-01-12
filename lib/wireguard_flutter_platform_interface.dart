@@ -1,17 +1,12 @@
 abstract class WireGuardFlutterInterface {
   Stream<String> vpnStageSnapshot();
 
-  Future<void> initialize({
-    String? localizedDescription,
-    String? win32ServiceName,
-  });
+  Future<void> initialize({required String interfaceName});
 
   Future<void> startVpn({
     required String serverAddress,
     required String wgQuickConfig,
     required String providerBundleIdentifier,
-    String? localizedDescription,
-    String? win32ServiceName,
   });
 
   Future<void> stopVpn();

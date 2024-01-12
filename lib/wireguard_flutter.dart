@@ -31,14 +31,8 @@ class WireGuardFlutter extends WireGuardFlutterInterface {
   Stream<String> vpnStageSnapshot() => _instance.vpnStageSnapshot();
 
   @override
-  Future<void> initialize({
-    String? localizedDescription,
-    String? win32ServiceName,
-  }) {
-    return _instance.initialize(
-      localizedDescription: localizedDescription,
-      win32ServiceName: win32ServiceName,
-    );
+  Future<void> initialize({required String interfaceName}) {
+    return _instance.initialize(interfaceName: interfaceName);
   }
 
   @override
@@ -46,15 +40,11 @@ class WireGuardFlutter extends WireGuardFlutterInterface {
     required String serverAddress,
     required String wgQuickConfig,
     required String providerBundleIdentifier,
-    String? localizedDescription,
-    String? win32ServiceName,
   }) async {
     return _instance.startVpn(
       serverAddress: serverAddress,
       wgQuickConfig: wgQuickConfig,
       providerBundleIdentifier: providerBundleIdentifier,
-      localizedDescription: localizedDescription,
-      win32ServiceName: win32ServiceName,
     );
   }
 

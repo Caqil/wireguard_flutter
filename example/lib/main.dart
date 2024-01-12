@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
 import 'package:wireguard_flutter/wireguard_flutter.dart';
@@ -18,33 +17,23 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   final wireGuardFlutter = WireGuardFlutter();
 
+  late String name;
+
   @override
   void initState() {
     super.initState();
     wireGuardFlutter.vpnStageSnapshot().listen((event) {
       debugPrint("status changed $event");
     });
+    name = 'wg_vpn';
   }
 
-  late String name;
-  // String get _randomName =>
-  //     'wg_vpn_${DateTime.now().millisecondsSinceEpoch.toStringAsFixed(3).replaceAll('.', '_')}';
-
   Future<void> initialize() async {
-    // name = _randomName;
-    name = 'wg_vpn';
     try {
-      await wireGuardFlutter.initialize(
-        localizedDescription: name,
-        win32ServiceName: name,
-      );
+      await wireGuardFlutter.initialize(interfaceName: name);
       debugPrint("initialize success");
-    } catch (e) {
-      debugPrint("failed to initialize success $e");
-      developer.log(
-        'Setup tunnel',
-        error: e,
-      );
+    } catch (error, stack) {
+      debugPrint("failed to initialize: $error\n$stack");
     }
   }
 
@@ -54,15 +43,9 @@ class _MyAppState extends State<MyApp> {
         serverAddress: '167.235.55.239:51820',
         wgQuickConfig: conf,
         providerBundleIdentifier: 'com.billion.wireguardvpn.WGExtension',
-        localizedDescription: 'wg_example',
-        win32ServiceName: name,
       );
-    } catch (e) {
-      debugPrint("failed to start $e");
-      developer.log(
-        'startVpn tunnel',
-        error: e.toString(),
-      );
+    } catch (error, stack) {
+      debugPrint("failed to start $error\n$stack");
     }
   }
 
@@ -70,11 +53,7 @@ class _MyAppState extends State<MyApp> {
     try {
       await wireGuardFlutter.stopVpn();
     } catch (e, str) {
-      debugPrint('$e\n$str');
-      developer.log(
-        'Disconnect',
-        error: e.toString(),
-      );
+      debugPrint('Failed to disconnect $e\n$str');
     }
   }
 
@@ -90,7 +69,7 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
-          title: const Text('WireGurad example app'),
+          title: const Text('WireGuard Example App'),
         ),
         body: Container(
           constraints: const BoxConstraints.expand(),

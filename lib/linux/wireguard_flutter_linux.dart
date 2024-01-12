@@ -21,11 +21,8 @@ class WireGuardFlutterLinux extends WireGuardFlutterInterface {
   final shell = Shell(runInShell: true, verbose: false);
 
   @override
-  Future<void> initialize({
-    String? localizedDescription,
-    String? win32ServiceName,
-  }) async {
-    name = localizedDescription;
+  Future<void> initialize({required String interfaceName}) async {
+    name = interfaceName;
     await refreshStage();
   }
 
@@ -52,7 +49,7 @@ class WireGuardFlutterLinux extends WireGuardFlutterInterface {
     if (isAlreadyConnected) return;
 
     _setStage(WireGuardFlutterInterface.vpnConnecting);
-    await shell.run('wg-quick up ${configFile!.path}');
+    await shell.run('sudo wg-quick up ${configFile!.path}');
     _setStage(WireGuardFlutterInterface.vpnConnected);
   }
 
@@ -64,7 +61,7 @@ class WireGuardFlutterLinux extends WireGuardFlutterInterface {
     );
     if (configFile != null) {
       _setStage(WireGuardFlutterInterface.vpnDisconnecting);
-      await shell.run('wg-quick down ${configFile!.path}');
+      await shell.run('sudo wg-quick down ${configFile!.path}');
       _setStage(WireGuardFlutterInterface.vpnDisconnected);
     }
   }
