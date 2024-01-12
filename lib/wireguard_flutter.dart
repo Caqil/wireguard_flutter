@@ -7,7 +7,11 @@ import 'package:wireguard_flutter/wireguard_flutter_method_channel.dart';
 import 'wireguard_flutter_platform_interface.dart';
 
 class WireGuardFlutter extends WireGuardFlutterInterface {
-  late final WireGuardFlutterInterface _instance;
+  static late WireGuardFlutterInterface _instance;
+
+  static void registerWith() {
+    _instance = WireGuardFlutter();
+  }
 
   WireGuardFlutter() {
     if (kIsWeb) {

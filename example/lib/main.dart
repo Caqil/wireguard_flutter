@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
-import 'package:wireguard_flutter/linux/wireguard_flutter_linux.dart';
 import 'package:wireguard_flutter/wireguard_flutter.dart';
 
 void main() {
@@ -17,10 +16,14 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  final WireGuardFlutter wireGuardFlutter = WireGuardFlutterLinux();
+  final wireGuardFlutter = WireGuardFlutter();
+
   @override
   void initState() {
     super.initState();
+    wireGuardFlutter.vpnStageSnapshot().listen((event) {
+      print(event);
+    });
   }
 
   late String name;
