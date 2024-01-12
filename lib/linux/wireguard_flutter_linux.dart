@@ -18,7 +18,7 @@ class WireGuardFlutterLinux extends WireGuardFlutterInterface {
     _stageController.add(stage);
   }
 
-  final shell = Shell(runInShell: true, verbose: false);
+  final shell = Shell(runInShell: true, verbose: kDebugMode);
 
   @override
   Future<void> initialize({required String interfaceName}) async {
@@ -31,8 +31,6 @@ class WireGuardFlutterLinux extends WireGuardFlutterInterface {
     required String serverAddress,
     required String wgQuickConfig,
     required String providerBundleIdentifier,
-    String? localizedDescription,
-    String? win32ServiceName,
   }) async {
     final isAlreadyConnected = await isConnected();
     if (!isAlreadyConnected) {
@@ -40,17 +38,32 @@ class WireGuardFlutterLinux extends WireGuardFlutterInterface {
     } else {
       debugPrint('Already connected');
     }
+
     final tempDir = await getTemporaryDirectory();
-    configFile = await File(
-      '${tempDir.path}${Platform.pathSeparator}$name.conf',
-    ).create();
-    await configFile!.writeAsString(wgQuickConfig);
+    final filePath = '${tempDir.path}${Platform.pathSeparator}$name.conf';
 
-    if (isAlreadyConnected) return;
+    try {
+      configFile = await File(filePath).create();
+      await configFile!.writeAsString(wgQuickConfig);
+    } on PathAccessException {
+      debugPrint('Denied to write file. Trying to start interface');
+      if (isAlreadyConnected) {
+        return _setStage(WireGuardFlutterInterface.vpnConnected);
+      }
 
-    _setStage(WireGuardFlutterInterface.vpnConnecting);
-    await shell.run('sudo wg-quick up ${configFile!.path}');
-    _setStage(WireGuardFlutterInterface.vpnConnected);
+      try {
+        await shell.run('sudo wg-quick up $name');
+      } catch (_) {
+      } finally {
+        _setStage(WireGuardFlutterInterface.vpnDenied);
+      }
+    }
+
+    if (!isAlreadyConnected) {
+      _setStage(WireGuardFlutterInterface.vpnConnecting);
+      await shell.run('sudo wg-quick up ${configFile?.path ?? filePath}');
+      _setStage(WireGuardFlutterInterface.vpnConnected);
+    }
   }
 
   @override
