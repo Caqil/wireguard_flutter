@@ -11,7 +11,7 @@ class WireGuardFlutterLinux extends WireGuardFlutterInterface {
   String? name;
   File? configFile;
 
-  VpnStage? _stage;
+  VpnStage _stage = VpnStage.noConnection;
   final _stageController = StreamController<VpnStage>.broadcast();
   void _setStage(VpnStage stage) {
     _stage = stage;
@@ -86,7 +86,7 @@ class WireGuardFlutterLinux extends WireGuardFlutterInterface {
   }
 
   @override
-  Future<VpnStage> stage() async => _stage ?? VpnStage.noConnection;
+  Future<VpnStage> stage() async => _stage;
 
   @override
   Stream<VpnStage> get vpnStageSnapshot => _stageController.stream;

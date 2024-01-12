@@ -19,13 +19,13 @@ abstract class WireGuardFlutterInterface {
 
 enum VpnStage {
   connected('connected'),
+  connecting('connecting'),
   disconnecting('disconnecting'),
   disconnected('disconnected'),
   waitingConnection('wait_connection'),
   authenticating('authenticating'),
   reconnect('reconnect'),
   noConnection('no_connection'),
-  connecting('connecting'),
   preparing('prepare'),
   denied('denied'),
   exiting('exiting');
