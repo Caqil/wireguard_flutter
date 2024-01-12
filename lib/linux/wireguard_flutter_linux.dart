@@ -54,7 +54,7 @@ class WireGuardFlutterLinux extends WireGuardFlutterInterface {
   @override
   Future<void> stopVpn() async {
     assert(
-      await isConnected(),
+      configFile == null || (await isConnected()),
       'Bad state: vpn has not been started. Call startVpn',
     );
     _setStage(WireGuardFlutterInterface.vpnDisconnecting);
@@ -76,6 +76,10 @@ class WireGuardFlutterLinux extends WireGuardFlutterInterface {
 
   @override
   Future<bool> isConnected() async {
+    assert(
+      name != null,
+      'Bad state: not initialized. Call "initialize" before calling this command',
+    );
     final processResultList = await shell.run('sudo wg');
     final process = processResultList.first;
     return process.outLines.any((line) => line.trim() == 'interface: $name');
