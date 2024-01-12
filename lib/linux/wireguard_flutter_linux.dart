@@ -26,6 +26,11 @@ class WireGuardFlutterLinux extends WireGuardFlutterInterface {
     await refreshStage();
   }
 
+  Future<String> get filePath async {
+    final tempDir = await getTemporaryDirectory();
+    return '${tempDir.path}${Platform.pathSeparator}$name.conf';
+  }
+
   @override
   Future<void> startVpn({
     required String serverAddress,
@@ -39,11 +44,8 @@ class WireGuardFlutterLinux extends WireGuardFlutterInterface {
       debugPrint('Already connected');
     }
 
-    final tempDir = await getTemporaryDirectory();
-    final filePath = '${tempDir.path}${Platform.pathSeparator}$name.conf';
-
     try {
-      configFile = await File(filePath).create();
+      configFile = await File(await filePath).create();
       await configFile!.writeAsString(wgQuickConfig);
     } on PathAccessException {
       debugPrint('Denied to write file. Trying to start interface');
@@ -61,7 +63,7 @@ class WireGuardFlutterLinux extends WireGuardFlutterInterface {
 
     if (!isAlreadyConnected) {
       _setStage(WireGuardFlutterInterface.vpnConnecting);
-      await shell.run('sudo wg-quick up ${configFile?.path ?? filePath}');
+      await shell.run('sudo wg-quick up ${configFile?.path ?? await filePath}');
       _setStage(WireGuardFlutterInterface.vpnConnected);
     }
   }
@@ -74,7 +76,8 @@ class WireGuardFlutterLinux extends WireGuardFlutterInterface {
     );
     _setStage(WireGuardFlutterInterface.vpnDisconnecting);
     try {
-      await shell.run('sudo wg-quick down ${configFile?.path ?? name!}');
+      await shell
+          .run('sudo wg-quick down ${configFile?.path ?? (await filePath)}');
     } catch (e) {
       await refreshStage();
       rethrow;
