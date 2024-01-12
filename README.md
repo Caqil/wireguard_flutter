@@ -20,11 +20,15 @@ On windows, the app must be run as administrator to be able to create the tunnel
 
 ### Linux
 
-Install the required dependencies:
+The required dependencies need to be installed: `wireguard` and `wireguard-tools`.
+
+On Ubuntu/Debian, use the following command:
 
 ```bash
 sudo apt install wireguard wireguard-tools openresolv
 ```
+
+For other Linux distros, see [this](https://www.wireguard.com/install/).
 
 ## FAQ & Troubleshooting
 
