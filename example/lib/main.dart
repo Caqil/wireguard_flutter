@@ -17,6 +17,7 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   final wireGuardFlutter = WireGuardFlutter();
+
   @override
   void initState() {
     super.initState();
@@ -34,7 +35,7 @@ class _MyAppState extends State<MyApp> {
     name = 'wg_vpn';
     try {
       await wireGuardFlutter.initialize(
-        localizedDescription: "wg_example",
+        localizedDescription: name,
         win32ServiceName: name,
       );
       debugPrint("initialize success");
@@ -68,8 +69,8 @@ class _MyAppState extends State<MyApp> {
   void disconnect() async {
     try {
       await wireGuardFlutter.stopVpn();
-    } catch (e) {
-      debugPrint(e.toString());
+    } catch (e, str) {
+      debugPrint('$e\n$str');
       developer.log(
         'Disconnect',
         error: e.toString(),
