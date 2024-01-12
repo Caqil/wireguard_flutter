@@ -11,7 +11,7 @@ class WireGuardFlutterMethodChannel extends WireGuardFlutterInterface {
   static const _eventChannel = EventChannel(_eventChannelVpnStage);
 
   @override
-  Stream<String> vpnStageSnapshot() => _eventChannel
+  Stream<String> get vpnStageSnapshot => _eventChannel
       .receiveBroadcastStream()
       .map((event) => event == WireGuardFlutterInterface.vpnDenied
           ? WireGuardFlutterInterface.vpnDisconnected

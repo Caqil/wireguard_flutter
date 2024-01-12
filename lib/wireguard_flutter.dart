@@ -7,28 +7,27 @@ import 'package:wireguard_flutter/wireguard_flutter_method_channel.dart';
 import 'wireguard_flutter_platform_interface.dart';
 
 class WireGuardFlutter extends WireGuardFlutterInterface {
-  static bool _initialized = false;
-  static late WireGuardFlutterInterface _instance;
+  static WireGuardFlutterInterface? __instance;
+  static WireGuardFlutterInterface get _instance => __instance!;
 
   static void registerWith() {
-    _instance = WireGuardFlutter();
-  }
-
-  WireGuardFlutter() {
-    if (!_initialized) {
+    if (__instance == null) {
       if (kIsWeb) {
         throw UnsupportedError('The web platform is not supported');
       } else if (Platform.isLinux) {
-        _instance = WireGuardFlutterLinux();
+        __instance = WireGuardFlutterLinux();
       } else {
-        _instance = WireGuardFlutterMethodChannel();
+        __instance = WireGuardFlutterMethodChannel();
       }
-      _initialized = true;
     }
   }
 
+  WireGuardFlutter() {
+    registerWith();
+  }
+
   @override
-  Stream<String> vpnStageSnapshot() => _instance.vpnStageSnapshot();
+  Stream<String> get vpnStageSnapshot => _instance.vpnStageSnapshot;
 
   @override
   Future<void> initialize({required String interfaceName}) {

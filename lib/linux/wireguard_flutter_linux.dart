@@ -71,7 +71,7 @@ class WireGuardFlutterLinux extends WireGuardFlutterInterface {
       _stage ?? WireGuardFlutterInterface.vpnNoConnection;
 
   @override
-  Stream<String> vpnStageSnapshot() => _stageController.stream;
+  Stream<String> get vpnStageSnapshot => _stageController.stream;
 
   @override
   Future<void> refreshStage() async {

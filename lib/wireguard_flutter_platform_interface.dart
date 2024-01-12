@@ -1,5 +1,5 @@
 abstract class WireGuardFlutterInterface {
-  Stream<String> vpnStageSnapshot();
+  Stream<String> get vpnStageSnapshot;
 
   Future<void> initialize({required String interfaceName});
 
