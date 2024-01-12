@@ -6,6 +6,8 @@ import 'package:wireguard_flutter/wireguard_flutter_method_channel.dart';
 
 import 'wireguard_flutter_platform_interface.dart';
 
+export 'wireguard_flutter_platform_interface.dart' show VpnStage;
+
 class WireGuardFlutter extends WireGuardFlutterInterface {
   static WireGuardFlutterInterface? __instance;
   static WireGuardFlutterInterface get _instance => __instance!;
