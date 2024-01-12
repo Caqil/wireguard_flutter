@@ -35,4 +35,4 @@ flutter:
       windows:
         pluginClass: WireguardFlutterPluginCApi
       linux:
-        pluginClass: WireguardFlutterPlugin
+        dartPluginClass: WireGuardFlutterLinux
