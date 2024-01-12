@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:process_run/shell.dart';
 
@@ -25,9 +26,7 @@ class WireGuardFlutterLinux extends WireGuardFlutterInterface {
     String? win32ServiceName,
   }) async {
     name = localizedDescription;
-    if (await isConnected()) {
-      _setStage(WireGuardFlutterInterface.vpnConnected);
-    }
+    await refreshStage();
   }
 
   @override
@@ -38,13 +37,19 @@ class WireGuardFlutterLinux extends WireGuardFlutterInterface {
     String? localizedDescription,
     String? win32ServiceName,
   }) async {
-    assert(!(await isConnected()), 'Already connected');
-    _setStage(WireGuardFlutterInterface.vpnPrepare);
+    final isAlreadyConnected = await isConnected();
+    if (!isAlreadyConnected) {
+      _setStage(WireGuardFlutterInterface.vpnPrepare);
+    } else {
+      debugPrint('Already connected');
+    }
     final tempDir = await getTemporaryDirectory();
     configFile = await File(
       '${tempDir.path}${Platform.pathSeparator}$name.conf',
     ).create();
     await configFile!.writeAsString(wgQuickConfig);
+
+    if (isAlreadyConnected) return;
 
     _setStage(WireGuardFlutterInterface.vpnConnecting);
     await shell.run('wg-quick up ${configFile!.path}');
@@ -54,12 +59,14 @@ class WireGuardFlutterLinux extends WireGuardFlutterInterface {
   @override
   Future<void> stopVpn() async {
     assert(
-      configFile == null || (await isConnected()),
+      configFile != null || (await isConnected()),
       'Bad state: vpn has not been started. Call startVpn',
     );
-    _setStage(WireGuardFlutterInterface.vpnDisconnecting);
-    await shell.run('wg-quick down ${configFile!.path}');
-    _setStage(WireGuardFlutterInterface.vpnDisconnected);
+    if (configFile != null) {
+      _setStage(WireGuardFlutterInterface.vpnDisconnecting);
+      await shell.run('wg-quick down ${configFile!.path}');
+      _setStage(WireGuardFlutterInterface.vpnDisconnected);
+    }
   }
 
   @override
@@ -70,8 +77,16 @@ class WireGuardFlutterLinux extends WireGuardFlutterInterface {
   Stream<String> vpnStageSnapshot() => _stageController.stream;
 
   @override
-  Future<void> refreshStage() {
-    throw UnimplementedError();
+  Future<void> refreshStage() async {
+    if (await isConnected()) {
+      _setStage(WireGuardFlutterInterface.vpnConnected);
+    } else if (name == null) {
+      _setStage(WireGuardFlutterInterface.vpnWaitConnection);
+    } else if (configFile == null) {
+      _setStage(WireGuardFlutterInterface.vpnNoConnection);
+    } else {
+      _setStage(WireGuardFlutterInterface.vpnDisconnected);
+    }
   }
 
   @override

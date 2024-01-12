@@ -69,8 +69,8 @@ class _MyAppState extends State<MyApp> {
   void disconnect() async {
     try {
       await wireGuardFlutter.stopVpn();
-    } catch (e) {
-      debugPrint(e.toString());
+    } catch (e, str) {
+      debugPrint('$e\n$str');
       developer.log(
         'Disconnect',
         error: e.toString(),
