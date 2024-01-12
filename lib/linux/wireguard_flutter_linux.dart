@@ -56,7 +56,7 @@ class WireGuardFlutterLinux extends WireGuardFlutterInterface {
   @override
   Future<void> stopVpn() async {
     assert(
-      configFile != null || (await isConnected()),
+      configFile != null && (await isConnected()),
       'Bad state: vpn has not been started. Call startVpn',
     );
     if (configFile != null) {

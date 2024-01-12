@@ -31,9 +31,9 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-//    wireguard.vpnStageSnapshot.listen((event) {
-//      debugPrint("status changed $event");
-//    });
+    wireguard.vpnStageSnapshot.listen((event) {
+      debugPrint("status changed $event");
+    });
     name = 'wg_vpn';
   }
 
