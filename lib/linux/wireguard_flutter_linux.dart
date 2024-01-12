@@ -69,14 +69,17 @@ class WireGuardFlutterLinux extends WireGuardFlutterInterface {
   @override
   Future<void> stopVpn() async {
     assert(
-      configFile != null && (await isConnected()),
+      (await isConnected()),
       'Bad state: vpn has not been started. Call startVpn',
     );
-    if (configFile != null) {
-      _setStage(WireGuardFlutterInterface.vpnDisconnecting);
-      await shell.run('sudo wg-quick down ${configFile!.path}');
-      _setStage(WireGuardFlutterInterface.vpnDisconnected);
+    _setStage(WireGuardFlutterInterface.vpnDisconnecting);
+    try {
+      await shell.run('sudo wg-quick down ${configFile?.path ?? name!}');
+    } catch (e) {
+      await refreshStage();
+      rethrow;
     }
+    await refreshStage();
   }
 
   @override
