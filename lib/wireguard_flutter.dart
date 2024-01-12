@@ -7,6 +7,7 @@ import 'package:wireguard_flutter/wireguard_flutter_method_channel.dart';
 import 'wireguard_flutter_platform_interface.dart';
 
 class WireGuardFlutter extends WireGuardFlutterInterface {
+  static bool _initialized = false;
   static late WireGuardFlutterInterface _instance;
 
   static void registerWith() {
@@ -14,12 +15,15 @@ class WireGuardFlutter extends WireGuardFlutterInterface {
   }
 
   WireGuardFlutter() {
-    if (kIsWeb) {
-      throw UnsupportedError('The web platform is not supported');
-    } else if (Platform.isLinux) {
-      _instance = WireGuardFlutterLinux();
-    } else {
-      _instance = WireGuardFlutterMethodChannel();
+    if (!_initialized) {
+      if (kIsWeb) {
+        throw UnsupportedError('The web platform is not supported');
+      } else if (Platform.isLinux) {
+        _instance = WireGuardFlutterLinux();
+      } else {
+        _instance = WireGuardFlutterMethodChannel();
+      }
+      _initialized = true;
     }
   }
 
