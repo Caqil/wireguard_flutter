@@ -29,7 +29,7 @@ class WireGuardFlutter extends WireGuardFlutterInterface {
   WireGuardFlutter._();
 
   @override
-  Stream<String> get vpnStageSnapshot => _instance.vpnStageSnapshot;
+  Stream<VpnStage> get vpnStageSnapshot => _instance.vpnStageSnapshot;
 
   @override
   Future<void> initialize({required String interfaceName}) {
@@ -56,5 +56,5 @@ class WireGuardFlutter extends WireGuardFlutterInterface {
   Future<void> refreshStage() => _instance.refreshStage();
 
   @override
-  Future<String> stage() => _instance.stage();
+  Future<VpnStage> stage() => _instance.stage();
 }
