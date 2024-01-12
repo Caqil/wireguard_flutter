@@ -4,9 +4,9 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:process_run/shell.dart';
 
-import '../wireguard_flutter.dart';
+import '../wireguard_flutter_platform_interface.dart';
 
-class WireGuardFlutterLinux extends WireGuardFlutter {
+class WireGuardFlutterLinux extends WireGuardFlutterInterface {
   String? name;
   File? configFile;
 
@@ -33,31 +33,37 @@ class WireGuardFlutterLinux extends WireGuardFlutter {
     String? localizedDescription,
     String? win32ServiceName,
   }) async {
-    _setStage(WireGuardFlutter.vpnPrepare);
+    _setStage(WireGuardFlutterInterface.vpnPrepare);
     final tempDir = await getTemporaryDirectory();
     configFile = await File(
       '${tempDir.path}${Platform.pathSeparator}$name.conf',
     ).create();
     await configFile!.writeAsString(wgQuickConfig);
 
-    _setStage(WireGuardFlutter.vpnConnecting);
+    _setStage(WireGuardFlutterInterface.vpnConnecting);
     final shell = Shell();
     await shell.run('wg-quick up ${configFile!.path}');
-    _setStage(WireGuardFlutter.vpnConnected);
+    _setStage(WireGuardFlutterInterface.vpnConnected);
   }
 
   @override
   Future<void> stopVpn() async {
     assert(configFile != null, 'Not started');
-    _setStage(WireGuardFlutter.vpnDisconnecting);
+    _setStage(WireGuardFlutterInterface.vpnDisconnecting);
     final shell = Shell();
     await shell.run('wg-quick down ${configFile!.path}');
-    _setStage(WireGuardFlutter.vpnDisconnected);
+    _setStage(WireGuardFlutterInterface.vpnDisconnected);
   }
 
   @override
-  Future<String> stage() async => _stage ?? WireGuardFlutter.vpnNoConnection;
+  Future<String> stage() async =>
+      _stage ?? WireGuardFlutterInterface.vpnNoConnection;
 
   @override
   Stream<String> vpnStageSnapshot() => _stageController.stream;
+
+  @override
+  Future<void> refreshStage() {
+    throw UnimplementedError();
+  }
 }
