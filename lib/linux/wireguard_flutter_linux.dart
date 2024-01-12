@@ -22,7 +22,7 @@ class WireGuardFlutterLinux extends WireGuardFlutterInterface {
 
   @override
   Future<void> initialize({required String interfaceName}) async {
-    name = interfaceName;
+    name = interfaceName.replaceAll(' ', '_');
     await refreshStage();
   }
 
