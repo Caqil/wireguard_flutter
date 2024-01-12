@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:process_run/shell.dart';
 
@@ -17,12 +18,17 @@ class WireGuardFlutterLinux extends WireGuardFlutterInterface {
     _stageController.add(stage);
   }
 
+  final shell = Shell(runInShell: true, verbose: false);
+
   @override
   Future<void> initialize({
     String? localizedDescription,
     String? win32ServiceName,
   }) async {
     name = localizedDescription;
+    if (await isConnected()) {
+      _setStage(WireGuardFlutterInterface.vpnConnected);
+    }
   }
 
   @override
@@ -33,6 +39,7 @@ class WireGuardFlutterLinux extends WireGuardFlutterInterface {
     String? localizedDescription,
     String? win32ServiceName,
   }) async {
+    assert(!(await isConnected()), 'Already connected');
     _setStage(WireGuardFlutterInterface.vpnPrepare);
     final tempDir = await getTemporaryDirectory();
     configFile = await File(
@@ -41,16 +48,17 @@ class WireGuardFlutterLinux extends WireGuardFlutterInterface {
     await configFile!.writeAsString(wgQuickConfig);
 
     _setStage(WireGuardFlutterInterface.vpnConnecting);
-    final shell = Shell();
     await shell.run('wg-quick up ${configFile!.path}');
     _setStage(WireGuardFlutterInterface.vpnConnected);
   }
 
   @override
   Future<void> stopVpn() async {
-    assert(configFile != null, 'Not started');
+    assert(
+      await isConnected(),
+      'Bad state: vpn has not been started. Call startVpn',
+    );
     _setStage(WireGuardFlutterInterface.vpnDisconnecting);
-    final shell = Shell();
     await shell.run('wg-quick down ${configFile!.path}');
     _setStage(WireGuardFlutterInterface.vpnDisconnected);
   }
@@ -65,5 +73,12 @@ class WireGuardFlutterLinux extends WireGuardFlutterInterface {
   @override
   Future<void> refreshStage() {
     throw UnimplementedError();
+  }
+
+  @override
+  Future<bool> isConnected() async {
+    final processResultList = await shell.run('sudo wg');
+    final process = processResultList.first;
+    return process.outLines.any((line) => line.trim() == 'interface: $name');
   }
 }
