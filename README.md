@@ -8,6 +8,7 @@ A flutter plugin to setup and control VPN connection via [Wireguard](https://www
   - [Disconnect](#disconnect)
   - [Stage](#stage)
 - [Supported Platforms](#supported-platforms)
+- [FAQ & Troubleshooting](#faq--troubleshooting)
 
 
 ## Usage
@@ -20,7 +21,7 @@ flutter pub add wireguard_flutter
 
 ### Initialize
 
-Initialize a wireguard instance with a name using `initialize`:
+Initialize a wireguard instance with a valid name using `initialize`:
 
 ```dart
 final wireguard = WireGuardFlutter.instance;
@@ -83,19 +84,37 @@ Or get the current stage using `getStage`:
 final stage = await wireguard.stage();
 ```
 
+The available stages are:
+
+| Code | Description |
+| ---- | ----------- |
+| connecting | The interface is connecting |
+| connected | The interface is connected |
+| disconnecting | The interface is disconnecting |
+| disconnected | The interface is disconnected |
+| waitingConnection | Waiting for a user interaction |
+| authenticating | Authenticating with the server |
+| reconnect | Reconnecting the the interface |
+| noConnection | Any connection has not been made |
+| preparing | Preparing to connect |
+| denied | The connection has been denied by the system, usually by refused permissions |
+| exiting | Exiting the interface |
+
 ## Supported Platforms
 
 |             | Android | iOS   | macOS | Windows | Linux |
 | ----------- | ------- | ----- | ----- | ------- | ----- |
-| **Version** | SDK 21+     | 15.0+ | 12+   | 7+      | Any   |
+| **Version** | SDK 21+ | 15.0+ | 12+   | 7+      | Any   |
 
 ### Windows
 
-On Windows, the app must be run as administrator to be able to create and manipulate the tunnel. To debug the app, run `flutter run` from an elevated command prompt. To run the app normally, the system will request your app to be run as administrator. No changes in the code are required.
+On Windows, the app must be run as administrator to be able to create and manipulate the tunnel. To debug the app, run `flutter run` from an elevated command prompt. To run the app normally, the system will request your app to be run as administrator. No code changes or external dependencies are required.
 
 ### Linux
 
-On Linux, the app must be run as a root user to be able to create and manipulate the tunnel. The required dependencies need to be installed: `wireguard` and `wireguard-tools`.
+#### Install dependencies
+
+The required dependencies need to be installed: `wireguard` and `wireguard-tools`.
 
 On Ubuntu/Debian, use the following command to install the dependencies:
 
@@ -105,7 +124,21 @@ sudo apt install wireguard wireguard-tools openresolv
 
 For other Linux distros, see [this](https://www.wireguard.com/install/).
 
+> [!NOTE]  
+> 
+> If `openresolv` is not installed in the system, configuration files with a DNS provided may not connect. See [this issue](#linux-error-resolvconf-command-not-found) for more information.
+
+#### Initializing
+
+When `wireguard.initialize` is called, the application will request your user password (`[sudo] password for <user>:`). This is necessary because wireguard must run as a root to be able to create AND manipulate the tunnels. This is true for either debug and release modes or a distributed executable.
+
+> [!CAUTION]
+>
+> Do not run the app in root mode (e.g `sudo ./executable`, `sudo flutter run`), otherwise the connection will not be established.
+
 ## FAQ & Troubleshooting
+
+### Linux error `resolvconf: command not found`
 
 On Linux, you may receive the error `resolvconf: command not found`. This is because wireguard tried to adjust the nameserver. Make sure to install `openresolv` or not provide the "DNS" field.
 
