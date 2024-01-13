@@ -70,6 +70,7 @@ namespace wireguard_flutter
       if (service == NULL)
       {
         CloseServiceHandle(service_manager);
+        EmitState("denied");
         throw ServiceControlException("Failed to create the service", GetLastError());
       }
     }
@@ -79,6 +80,7 @@ namespace wireguard_flutter
     {
       CloseServiceHandle(service);
       CloseServiceHandle(service_manager);
+      EmitState("denied");
       throw ServiceControlException("Failed to configure servivce SID type", GetLastError());
     }
 
@@ -87,6 +89,7 @@ namespace wireguard_flutter
     {
       CloseServiceHandle(service);
       CloseServiceHandle(service_manager);
+      EmitState("denied");
       throw ServiceControlException("Failed to configure service description", GetLastError());
     }
 
@@ -102,6 +105,7 @@ namespace wireguard_flutter
     {
       CloseServiceHandle(service);
       CloseServiceHandle(service_manager);
+      EmitState("denied");
       return;
     }
 
@@ -109,6 +113,7 @@ namespace wireguard_flutter
     {
       CloseServiceHandle(service);
       CloseServiceHandle(service_manager);
+      EmitState("connected");
       return;
     }
 
@@ -118,6 +123,7 @@ namespace wireguard_flutter
     {
       CloseServiceHandle(service);
       CloseServiceHandle(service_manager);
+      EmitState("denied");
       throw ServiceControlException("Failed to start the service", GetLastError());
     }
 

@@ -101,6 +101,8 @@ namespace wireguard_flutter
         return;
       }
 
+      this->tunnel_service_->EmitState("prepare");
+
       wstring wg_config_filename;
       try
       {
@@ -108,6 +110,7 @@ namespace wireguard_flutter
       }
       catch (exception &e)
       {
+        this->tunnel_service_->EmitState("no_connection");
         result->Error(string("Could not write wireguard config: ").append(e.what()));
         return;
       }
