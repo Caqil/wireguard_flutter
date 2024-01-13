@@ -12,8 +12,14 @@ class WireGuardFlutterMethodChannel extends WireGuardFlutterInterface {
 
   @override
   Stream<VpnStage> get vpnStageSnapshot =>
-      _eventChannel.receiveBroadcastStream().map((event) =>
-          event == VpnStage.denied.code ? VpnStage.disconnected : event);
+      _eventChannel.receiveBroadcastStream().map(
+            (event) => event == VpnStage.denied.code
+                ? VpnStage.disconnected
+                : VpnStage.values.firstWhere(
+                    (stage) => stage.code == event,
+                    orElse: () => VpnStage.noConnection,
+                  ),
+          );
 
   @override
   Future<void> initialize({required String interfaceName}) {
