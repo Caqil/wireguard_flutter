@@ -1,36 +1,37 @@
 abstract class WireGuardFlutterInterface {
-  Stream<VpnStage> get vpnStageSnapshot;
+  Stream<String> vpnStageSnapshot();
 
-  Future<void> initialize({required String interfaceName});
+  Future<void> initialize({
+    String? localizedDescription,
+    String? win32ServiceName,
+  });
 
   Future<void> startVpn({
     required String serverAddress,
     required String wgQuickConfig,
     required String providerBundleIdentifier,
+    String? localizedDescription,
+    String? win32ServiceName,
   });
 
   Future<void> stopVpn();
 
   Future<void> refreshStage();
-  Future<VpnStage> stage();
-  Future<bool> isConnected() =>
-      stage().then((stage) => stage == VpnStage.connected);
-}
+  Future<String> stage();
+  Future<bool> isConnected() => stage().then(
+        (value) =>
+            value.toLowerCase() == WireGuardFlutterInterface.vpnConnected,
+      );
 
-enum VpnStage {
-  connected('connected'),
-  connecting('connecting'),
-  disconnecting('disconnecting'),
-  disconnected('disconnected'),
-  waitingConnection('wait_connection'),
-  authenticating('authenticating'),
-  reconnect('reconnect'),
-  noConnection('no_connection'),
-  preparing('prepare'),
-  denied('denied'),
-  exiting('exiting');
-
-  final String code;
-
-  const VpnStage(this.code);
+  static const String vpnConnected = "connected";
+  static const String vpnDisconnecting = "disconnecting";
+  static const String vpnDisconnected = "disconnected";
+  static const String vpnWaitConnection = "wait_connection";
+  static const String vpnAuthenticating = "authenticating";
+  static const String vpnReconnect = "reconnect";
+  static const String vpnNoConnection = "no_connection";
+  static const String vpnConnecting = "connecting";
+  static const String vpnPrepare = "prepare";
+  static const String vpnDenied = "denied";
+  static const String vpnExiting = "exiting";
 }
