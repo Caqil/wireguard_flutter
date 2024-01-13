@@ -11,24 +11,22 @@ class WireGuardFlutterLinux extends WireGuardFlutterInterface {
   String? name;
   File? configFile;
 
-  VpnStage _stage = VpnStage.noConnection;
-  final _stageController = StreamController<VpnStage>.broadcast();
-  void _setStage(VpnStage stage) {
+  String? _stage;
+  final _stageController = StreamController<String>.broadcast();
+  void _setStage(String stage) {
     _stage = stage;
     _stageController.add(stage);
   }
 
-  final shell = Shell(runInShell: true, verbose: kDebugMode);
+  final shell = Shell(runInShell: true, verbose: false);
 
   @override
-  Future<void> initialize({required String interfaceName}) async {
-    name = interfaceName.replaceAll(' ', '_');
+  Future<void> initialize({
+    String? localizedDescription,
+    String? win32ServiceName,
+  }) async {
+    name = localizedDescription;
     await refreshStage();
-  }
-
-  Future<String> get filePath async {
-    final tempDir = await getTemporaryDirectory();
-    return '${tempDir.path}${Platform.pathSeparator}$name.conf';
   }
 
   @override
@@ -36,71 +34,58 @@ class WireGuardFlutterLinux extends WireGuardFlutterInterface {
     required String serverAddress,
     required String wgQuickConfig,
     required String providerBundleIdentifier,
+    String? localizedDescription,
+    String? win32ServiceName,
   }) async {
     final isAlreadyConnected = await isConnected();
     if (!isAlreadyConnected) {
-      _setStage(VpnStage.preparing);
+      _setStage(WireGuardFlutterInterface.vpnPrepare);
     } else {
       debugPrint('Already connected');
     }
+    final tempDir = await getTemporaryDirectory();
+    configFile = await File(
+      '${tempDir.path}${Platform.pathSeparator}$name.conf',
+    ).create();
+    await configFile!.writeAsString(wgQuickConfig);
 
-    try {
-      configFile = await File(await filePath).create();
-      await configFile!.writeAsString(wgQuickConfig);
-    } on PathAccessException {
-      debugPrint('Denied to write file. Trying to start interface');
-      if (isAlreadyConnected) {
-        return _setStage(VpnStage.connected);
-      }
+    if (isAlreadyConnected) return;
 
-      try {
-        await shell.run('sudo wg-quick up $name');
-      } catch (_) {
-      } finally {
-        _setStage(VpnStage.denied);
-      }
-    }
-
-    if (!isAlreadyConnected) {
-      _setStage(VpnStage.connecting);
-      await shell.run('sudo wg-quick up ${configFile?.path ?? await filePath}');
-      _setStage(VpnStage.connected);
-    }
+    _setStage(WireGuardFlutterInterface.vpnConnecting);
+    await shell.run('wg-quick up ${configFile!.path}');
+    _setStage(WireGuardFlutterInterface.vpnConnected);
   }
 
   @override
   Future<void> stopVpn() async {
     assert(
-      (await isConnected()),
+      configFile != null || (await isConnected()),
       'Bad state: vpn has not been started. Call startVpn',
     );
-    _setStage(VpnStage.disconnecting);
-    try {
-      await shell
-          .run('sudo wg-quick down ${configFile?.path ?? (await filePath)}');
-    } catch (e) {
-      await refreshStage();
-      rethrow;
+    if (configFile != null) {
+      _setStage(WireGuardFlutterInterface.vpnDisconnecting);
+      await shell.run('wg-quick down ${configFile!.path}');
+      _setStage(WireGuardFlutterInterface.vpnDisconnected);
     }
-    await refreshStage();
   }
 
   @override
-  Future<VpnStage> stage() async => _stage;
+  Future<String> stage() async =>
+      _stage ?? WireGuardFlutterInterface.vpnNoConnection;
 
   @override
-  Stream<VpnStage> get vpnStageSnapshot => _stageController.stream;
+  Stream<String> vpnStageSnapshot() => _stageController.stream;
 
   @override
   Future<void> refreshStage() async {
     if (await isConnected()) {
-      _setStage(VpnStage.connected);
+      _setStage(WireGuardFlutterInterface.vpnConnected);
     } else if (name == null) {
-      _setStage(VpnStage.waitingConnection);
+      _setStage(WireGuardFlutterInterface.vpnWaitConnection);
     } else if (configFile == null) {
-      _setStage(VpnStage.noConnection);
+      _setStage(WireGuardFlutterInterface.vpnNoConnection);
     } else {
-      _setStage(VpnStage.disconnected);
+      _setStage(WireGuardFlutterInterface.vpnDisconnected);
     }
   }
 
