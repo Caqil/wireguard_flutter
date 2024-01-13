@@ -6,35 +6,36 @@ import 'package:wireguard_flutter/wireguard_flutter_method_channel.dart';
 
 import 'wireguard_flutter_platform_interface.dart';
 
-class WireGuardFlutter extends WireGuardFlutterInterface {
-  static late WireGuardFlutterInterface _instance;
+export 'wireguard_flutter_platform_interface.dart' show VpnStage;
 
-  static void registerWith() {
-    _instance = WireGuardFlutter();
+class WireGuardFlutter extends WireGuardFlutterInterface {
+  static WireGuardFlutterInterface? __instance;
+  static WireGuardFlutterInterface get _instance => __instance!;
+  static WireGuardFlutterInterface get instance {
+    registerWith();
+    return _instance;
   }
 
-  WireGuardFlutter() {
-    if (kIsWeb) {
-      throw UnsupportedError('The web platform is not supported');
-    } else if (Platform.isLinux) {
-      _instance = WireGuardFlutterLinux();
-    } else {
-      _instance = WireGuardFlutterMethodChannel();
+  static void registerWith() {
+    if (__instance == null) {
+      if (kIsWeb) {
+        throw UnsupportedError('The web platform is not supported');
+      } else if (Platform.isLinux) {
+        __instance = WireGuardFlutterLinux();
+      } else {
+        __instance = WireGuardFlutterMethodChannel();
+      }
     }
   }
 
-  @override
-  Stream<String> vpnStageSnapshot() => _instance.vpnStageSnapshot();
+  WireGuardFlutter._();
 
   @override
-  Future<void> initialize({
-    String? localizedDescription,
-    String? win32ServiceName,
-  }) {
-    return _instance.initialize(
-      localizedDescription: localizedDescription,
-      win32ServiceName: win32ServiceName,
-    );
+  Stream<VpnStage> get vpnStageSnapshot => _instance.vpnStageSnapshot;
+
+  @override
+  Future<void> initialize({required String interfaceName}) {
+    return _instance.initialize(interfaceName: interfaceName);
   }
 
   @override
@@ -42,15 +43,11 @@ class WireGuardFlutter extends WireGuardFlutterInterface {
     required String serverAddress,
     required String wgQuickConfig,
     required String providerBundleIdentifier,
-    String? localizedDescription,
-    String? win32ServiceName,
   }) async {
     return _instance.startVpn(
       serverAddress: serverAddress,
       wgQuickConfig: wgQuickConfig,
       providerBundleIdentifier: providerBundleIdentifier,
-      localizedDescription: localizedDescription,
-      win32ServiceName: win32ServiceName,
     );
   }
 
@@ -61,5 +58,5 @@ class WireGuardFlutter extends WireGuardFlutterInterface {
   Future<void> refreshStage() => _instance.refreshStage();
 
   @override
-  Future<String> stage() => _instance.stage();
+  Future<VpnStage> stage() => _instance.stage();
 }
