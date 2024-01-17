@@ -148,4 +148,4 @@ On Linux, you may receive the error `resolvconf: command not found`. This is bec
 
 Fork from [mysteriumnetwork](https://github.com/mysteriumnetwork/wireguard_dart/) tunnel.
 
-Many Thanks for [[Bruno D'Luka](https://github.com/bdlukaa) for help me.
+Many Thanks for [Bruno D'Luka](https://github.com/bdlukaa) for help me.
