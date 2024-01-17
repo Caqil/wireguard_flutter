@@ -1,12 +1,18 @@
 #include "service_control.h"
 
+#include <flutter/standard_method_codec.h>
+#include <flutter/event_channel.h>
+#include <flutter/event_stream_handler.h>
+#include <flutter/event_stream_handler_functions.h>
+#include <flutter/encodable_value.h>
+
 #include <windows.h>
 
 #include <stdexcept>
 #include <string>
-#include <iostream>
 
 #include "utils.h"
+#include <iostream>
 
 namespace wireguard_flutter
 {
@@ -14,130 +20,135 @@ namespace wireguard_flutter
   class ServiceControlException : public std::exception
   {
   private:
-    char *message_;
-    unsigned long *error_code_;
+    std::string message_;
+    unsigned long error_code_;
 
   public:
-    ServiceControlException(char *msg) : message_(msg), error_code_(nullptr) {}
-    ServiceControlException(char *msg, unsigned long errc) : message_(msg), error_code_(&errc) {}
+    explicit ServiceControlException(const std::string &msg) : message_(msg), error_code_(0) {}
+
+    ServiceControlException(const std::string &msg, unsigned long errc) : message_(msg), error_code_(errc) {}
 
     const char *what() const noexcept override
     {
-      if (error_code_ != nullptr)
-      {
-        return ErrorWithCode(message_, *error_code_).c_str();
-      }
-      return message_;
+      std::string s = message_ + " (" + std::to_string(error_code_) + ")";
+      return s.c_str();
+    }
+
+    unsigned long GetErrorCode() const noexcept
+    {
+      return error_code_;
     }
   };
 
-  void ServiceControl::Create(CreateArgs args)
+  void ServiceControl::CreateAndStart(CreateArgs args)
   {
-    std::wcout << "creating scm" << std::endl;
-    SC_HANDLE service_manager = OpenSCManager(nullptr, nullptr, SC_MANAGER_ALL_ACCESS);
-    if (service_manager == nullptr)
+    SC_HANDLE service_manager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+    if (service_manager == NULL)
     {
-      DWORD lastError = GetLastError();
-      std::cerr << "Error opening service control manager. Error code: " << lastError << std::endl;
       throw ServiceControlException("Failed to open service manager", GetLastError());
     }
 
-    std::wcout << "checking for open service" << std::endl;
     SC_HANDLE service = OpenService(service_manager, &service_name_[0], SC_MANAGER_ALL_ACCESS);
-    if (service != nullptr)
+    if (service == NULL)
     {
-      DeleteService(service);
       CloseServiceHandle(service);
+
+      EmitState("connecting");
+      service = CreateService(service_manager,                  // SCM database
+                              &service_name_[0],                // name of service
+                              &service_name_[0],                // service name to display
+                              SERVICE_ALL_ACCESS,               // desired access
+                              SERVICE_WIN32_OWN_PROCESS,        // service type
+                              SERVICE_DEMAND_START,             // start type
+                              SERVICE_ERROR_NORMAL,             // error control type
+                              args.executable_and_args.c_str(), // path to service's binary
+                              NULL,                             // no load ordering group
+                              NULL,                             // no tag identifier
+                              NULL,                             // args.dependencies.c_str(),
+                              NULL,                             // LocalSystem account
+                              NULL);
+      if (service == NULL)
+      {
+        CloseServiceHandle(service_manager);
+        EmitState("denied");
+        throw ServiceControlException("Failed to create the service", GetLastError());
+      }
     }
 
-    std::wcout << "creating service object" << std::endl;
-    service = CreateService(service_manager,                  // SCM database
-                            &service_name_[0],                // name of service
-                            &service_name_[0],                // service name to display
-                            SERVICE_ALL_ACCESS,               // desired access
-                            SERVICE_WIN32_OWN_PROCESS,        // service type
-                            SERVICE_DEMAND_START,             // start type
-                            SERVICE_ERROR_NORMAL,             // error control type
-                            args.executable_and_args.c_str(), // path to service's binary
-                            nullptr,                             // no load ordering group
-                            nullptr,                             // no tag identifier
-                            args.dependencies.c_str(),
-                            nullptr, // LocalSystem account
-                            nullptr);
-    if (service == nullptr)
-    {
-      CloseServiceHandle(service_manager);
-      throw ServiceControlException("Failed to create the service", GetLastError());
-    }
-
-    std::wcout << "sid unrestricted" << std::endl;
     auto sid_type = SERVICE_SID_TYPE_UNRESTRICTED;
     if (!ChangeServiceConfig2(service, SERVICE_CONFIG_SERVICE_SID_INFO, &sid_type))
     {
       CloseServiceHandle(service);
       CloseServiceHandle(service_manager);
+      EmitState("denied");
       throw ServiceControlException("Failed to configure servivce SID type", GetLastError());
     }
 
-    std::wcout << "description" << std::endl;
     SERVICE_DESCRIPTION description = {&args.description[0]};
     if (!ChangeServiceConfig2(service, SERVICE_CONFIG_DESCRIPTION, &description))
     {
       CloseServiceHandle(service);
       CloseServiceHandle(service_manager);
+      EmitState("denied");
       throw ServiceControlException("Failed to configure service description", GetLastError());
     }
 
-    std::wcout << "closing" << std::endl;
-    CloseServiceHandle(service);
-    CloseServiceHandle(service_manager);
-  }
+    SERVICE_STATUS_PROCESS ssStatus;
+    DWORD dwBytesNeeded;
 
-  void ServiceControl::Start()
-  {
-    std::wcout << "creating scm" << std::endl;
-    SC_HANDLE service_manager = OpenSCManager(nullptr, nullptr, SC_MANAGER_ALL_ACCESS);
-    if (service_manager == nullptr)
+    if (!QueryServiceStatusEx(
+            service,                        // handle to service
+            SC_STATUS_PROCESS_INFO,         // information level
+            (LPBYTE)&ssStatus,              // address of structure
+            sizeof(SERVICE_STATUS_PROCESS), // size of structure
+            &dwBytesNeeded))                // size needed if buffer is too small
     {
-      throw ServiceControlException("Failed to open service manager", GetLastError());
-    }
-
-    std::wcout << "opening service" << std::endl;
-    SC_HANDLE service = OpenService(service_manager, this->service_name_.c_str(), SC_MANAGER_ALL_ACCESS);
-    if (service == nullptr)
-    {
-      CloseServiceHandle(service_manager);
-      throw ServiceControlException("Failed to start: service does not exist");
-    }
-
-    std::wcout << "starting service" << std::endl;
-    if (!StartService(service, 0, nullptr))
-    {
-      std::cerr << "Error starting service. Error code: " << GetLastError() << std::endl;
       CloseServiceHandle(service);
       CloseServiceHandle(service_manager);
+      EmitState("denied");
+      return;
+    }
+
+    if (ssStatus.dwCurrentState != SERVICE_STOPPED && ssStatus.dwCurrentState != SERVICE_STOP_PENDING)
+    {
+      CloseServiceHandle(service);
+      CloseServiceHandle(service_manager);
+      EmitState("connected");
+      return;
+    }
+
+    EmitState("connecting");
+
+    if (!StartService(service, 0, NULL))
+    {
+      CloseServiceHandle(service);
+      CloseServiceHandle(service_manager);
+      EmitState("denied");
       throw ServiceControlException("Failed to start the service", GetLastError());
     }
 
-    std::wcout << "closing" << std::endl;
+    EmitState("connected");
+
     CloseServiceHandle(service);
     CloseServiceHandle(service_manager);
   }
 
   void ServiceControl::Stop()
   {
-    SC_HANDLE service_manager = OpenSCManager(nullptr, nullptr, SC_MANAGER_ALL_ACCESS);
-    if (service_manager == nullptr)
+    SC_HANDLE service_manager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+    if (service_manager == NULL)
     {
       throw ServiceControlException("Failed to open service manager", GetLastError());
     }
 
     SC_HANDLE service = OpenService(service_manager, &service_name_[0], SERVICE_STOP | SERVICE_QUERY_STATUS);
-    if (service == nullptr)
+    if (service == NULL)
     {
       CloseServiceHandle(service_manager);
       return;
     }
+
+    EmitState("disconnecting");
 
     SERVICE_STATUS_PROCESS service_status;
     DWORD service_status_bytes_needed;
@@ -150,6 +161,7 @@ namespace wireguard_flutter
     }
     if (service_status.dwCurrentState == SERVICE_STOPPED)
     {
+      EmitState("disconnected");
       CloseServiceHandle(service);
       CloseServiceHandle(service_manager);
       return;
@@ -181,6 +193,7 @@ namespace wireguard_flutter
 
       if (service_status.dwCurrentState == SERVICE_STOPPED)
       {
+        EmitState("disconnected");
         CloseServiceHandle(service);
         CloseServiceHandle(service_manager);
         return;
@@ -217,6 +230,7 @@ namespace wireguard_flutter
 
       if (service_status.dwCurrentState == SERVICE_STOPPED)
       {
+        EmitState("disconnected");
         CloseServiceHandle(service);
         CloseServiceHandle(service_manager);
         return;
@@ -234,29 +248,84 @@ namespace wireguard_flutter
     CloseServiceHandle(service_manager);
   }
 
-  void ServiceControl::Disable()
+  std::string ServiceControl::GetStatus()
   {
-    SC_HANDLE service_manager = OpenSCManager(nullptr, nullptr, SC_MANAGER_ALL_ACCESS);
-    if (service_manager == nullptr)
+    SC_HANDLE service_manager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+    if (service_manager == NULL)
     {
       throw ServiceControlException("Failed to open service manager", GetLastError());
     }
 
-    SC_HANDLE service = OpenService(service_manager, &service_name_[0], SERVICE_CHANGE_CONFIG);
-    if (service == nullptr)
+    SC_HANDLE service = OpenService(service_manager, &service_name_[0], SC_MANAGER_ALL_ACCESS);
+    if (service == NULL)
     {
       CloseServiceHandle(service_manager);
-      return;
+      CloseServiceHandle(service);
+      return "disconnected";
     }
 
-    auto service_start_type = SERVICE_DISABLED;
-    if (!ChangeServiceConfig(service, SERVICE_NO_CHANGE, service_start_type, SERVICE_NO_CHANGE, NULL, NULL, NULL, NULL,
-                             nullptr, nullptr, nullptr))
+    SERVICE_STATUS_PROCESS ssStatus;
+    DWORD dwBytesNeeded;
+
+    if (!QueryServiceStatusEx(
+            service,                        // handle to service
+            SC_STATUS_PROCESS_INFO,         // information level
+            (LPBYTE)&ssStatus,              // address of structure
+            sizeof(SERVICE_STATUS_PROCESS), // size of structure
+            &dwBytesNeeded))                // size needed if buffer is too small
     {
       CloseServiceHandle(service);
       CloseServiceHandle(service_manager);
-      throw ServiceControlException("Failed to disable service", GetLastError());
+      return "denied";
     }
+
+    CloseServiceHandle(service);
+    CloseServiceHandle(service_manager);
+
+    if (ssStatus.dwCurrentState == SERVICE_STOPPED || ssStatus.dwCurrentState == SERVICE_PAUSED)
+    {
+      return "disconnected";
+    }
+    else if (ssStatus.dwCurrentState == SERVICE_STOP_PENDING || ssStatus.dwCurrentState == SERVICE_PAUSE_PENDING)
+    {
+      return "disconnecting";
+    }
+    else if (ssStatus.dwCurrentState == SERVICE_START_PENDING)
+    {
+      return "connecting";
+    }
+    else if (ssStatus.dwCurrentState == SERVICE_RUNNING)
+    {
+      return "connected";
+    }
+    else if (ssStatus.dwCurrentState == SERVICE_CONTINUE_PENDING)
+    {
+      return "reconnecting";
+    }
+
+    return "no_connection";
+  }
+
+  void ServiceControl::RegisterListener(std::unique_ptr<flutter::EventSink<flutter::EncodableValue>> &&events)
+  {
+    if (events_ == nullptr)
+    {
+      events_ = std::move(events);
+    }
+  }
+
+  void ServiceControl::UnregisterListener()
+  {
+    events_ = nullptr;
+    }
+
+  void ServiceControl::EmitState(std::string state)
+  {
+    if (events_ == nullptr)
+    {
+      return;
+    }
+    events_->Success(flutter::EncodableValue(state));
   }
 
 } // namespace wireguard_flutter

@@ -1,73 +1,62 @@
-import 'package:flutter/services.dart';
+import 'dart:io';
 
-class WireGuardFlutter {
-  static const String _methodChannelVpnControl =
-      "billion.group.wireguard_flutter/wgcontrol";
-  static const _eventChannelVpnStage =
-      'billion.group.wireguard_flutter/wgstage';
-  static const EventChannel _eventChannel = EventChannel(_eventChannelVpnStage);
+import 'package:flutter/foundation.dart';
+import 'package:wireguard_flutter/linux/wireguard_flutter_linux.dart';
+import 'package:wireguard_flutter/wireguard_flutter_method_channel.dart';
 
-  Stream<String> vpnStageSnapshot() => _eventChannel
-      .receiveBroadcastStream()
-      .map((event) => event == vpnDenied ? vpnDisconnected : event);
+import 'wireguard_flutter_platform_interface.dart';
 
-  Future<void> initialize(
-      {String? localizedDescription, String? win32ServiceName}) {
-    return const MethodChannel(_methodChannelVpnControl)
-        .invokeMethod("initialize", {
-      "localizedDescription": localizedDescription!,
-      "win32ServiceName": win32ServiceName,
-    }).then((value) async {
-      await stage();
-    });
+export 'wireguard_flutter_platform_interface.dart' show VpnStage;
+
+class WireGuardFlutter extends WireGuardFlutterInterface {
+  static WireGuardFlutterInterface? __instance;
+  static WireGuardFlutterInterface get _instance => __instance!;
+  static WireGuardFlutterInterface get instance {
+    registerWith();
+    return _instance;
   }
 
-  Future<void> startVpn(
-      {required String serverAddress,
-      required String wgQuickConfig,
-      required String providerBundleIdentifier,
-      String? localizedDescription,
-      String? win32ServiceName}) async {
-    // if (Platform.isAndroid || Platform.isIOS || Platform.isMacOS) {
-    await initialize(
-      localizedDescription: localizedDescription,
-      win32ServiceName: win32ServiceName,
+  static void registerWith() {
+    if (__instance == null) {
+      if (kIsWeb) {
+        throw UnsupportedError('The web platform is not supported');
+      } else if (Platform.isLinux) {
+        __instance = WireGuardFlutterLinux();
+      } else {
+        __instance = WireGuardFlutterMethodChannel();
+      }
+    }
+  }
+
+  WireGuardFlutter._();
+
+  @override
+  Stream<VpnStage> get vpnStageSnapshot => _instance.vpnStageSnapshot;
+
+  @override
+  Future<void> initialize({required String interfaceName}) {
+    return _instance.initialize(interfaceName: interfaceName);
+  }
+
+  @override
+  Future<void> startVpn({
+    required String serverAddress,
+    required String wgQuickConfig,
+    required String providerBundleIdentifier,
+  }) async {
+    return _instance.startVpn(
+      serverAddress: serverAddress,
+      wgQuickConfig: wgQuickConfig,
+      providerBundleIdentifier: providerBundleIdentifier,
     );
-    // }
-    return const MethodChannel(_methodChannelVpnControl).invokeMethod("start", {
-      "serverAddress": serverAddress,
-      "wgQuickConfig": wgQuickConfig,
-      "providerBundleIdentifier": providerBundleIdentifier,
-      "localizedDescription": localizedDescription,
-      "win32ServiceName": win32ServiceName,
-    }).then((value) {
-      stage();
-    });
   }
 
-  Future<void> stopVpn() async {
-    await const MethodChannel(_methodChannelVpnControl).invokeMethod('stop');
-  }
+  @override
+  Future<void> stopVpn() => _instance.stopVpn();
 
-  Future<void> refreshStage() =>
-      const MethodChannel(_methodChannelVpnControl).invokeMethod("refresh");
-  Future<String> stage() =>
-      const MethodChannel(_methodChannelVpnControl).invokeMethod("stage").then(
-            (value) => value ?? vpnDisconnected,
-          );
-  Future<bool> isConnected() => stage().then(
-        (value) => value.toLowerCase() == vpnConnected,
-      );
+  @override
+  Future<void> refreshStage() => _instance.refreshStage();
 
-  static const String vpnConnected = "connected";
-  static const String vpnDisconnecting = "disconnecting";
-  static const String vpnDisconnected = "disconnected";
-  static const String vpnWaitConnection = "wait_connection";
-  static const String vpnAuthenticating = "authenticating";
-  static const String vpnReconnect = "reconnect";
-  static const String vpnNoConnection = "no_connection";
-  static const String vpnConnecting = "connecting";
-  static const String vpnPrepare = "prepare";
-  static const String vpnDenied = "denied";
-  static const String vpnExiting = "exiting";
+  @override
+  Future<VpnStage> stage() => _instance.stage();
 }

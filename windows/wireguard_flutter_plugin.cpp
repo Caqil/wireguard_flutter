@@ -1,83 +1,92 @@
 #include "wireguard_flutter_plugin.h"
 
 // This must be included before many other Windows headers.
-#include <flutter/event_channel.h>
+#include <flutter/method_channel.h>
 #include <flutter/plugin_registrar_windows.h>
 #include <flutter/standard_method_codec.h>
+#include <flutter/event_channel.h>
+#include <flutter/event_stream_handler.h>
+#include <flutter/event_stream_handler_functions.h>
+#include <flutter/encodable_value.h>
 #include <libbase64.h>
 #include <windows.h>
 
 #include <memory>
 #include <sstream>
-#include <wireguard.h>
-#include <tunnel.h>
 
 #include "config_writer.h"
 #include "service_control.h"
 #include "utils.h"
 
+using namespace flutter;
+using namespace std;
+
 namespace wireguard_flutter
 {
 
   // static
-  void WireguardFlutterPlugin::RegisterWithRegistrar(flutter::PluginRegistrarWindows *registrar)
+  void WireguardFlutterPlugin::RegisterWithRegistrar(PluginRegistrarWindows *registrar)
   {
-    auto channel = std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
-        registrar->messenger(), "billion.group.wireguard_flutter/wgcontrol", &flutter::StandardMethodCodec::GetInstance());
+    auto channel = make_unique<MethodChannel<EncodableValue>>(
+        registrar->messenger(), "billion.group.wireguard_flutter/wgcontrol", &StandardMethodCodec::GetInstance());
+    auto eventChannel = make_unique<EventChannel<EncodableValue>>(
+        registrar->messenger(), "billion.group.wireguard_flutter/wgstage", &StandardMethodCodec::GetInstance());
 
-    auto plugin = std::make_unique<WireguardFlutterPlugin>();
+    auto plugin = make_unique<WireguardFlutterPlugin>();
 
     channel->SetMethodCallHandler([plugin_pointer = plugin.get()](const auto &call, auto result)
-                                  { plugin_pointer->HandleMethodCall(call, std::move(result)); });
+                                  { plugin_pointer->HandleMethodCall(call, move(result)); });
 
-    registrar->AddPlugin(std::move(plugin));
+    auto eventsHandler = make_unique<StreamHandlerFunctions<EncodableValue>>(
+        [plugin_pointer = plugin.get()](
+            const EncodableValue *arguments,
+            unique_ptr<EventSink<EncodableValue>> &&events)
+            -> unique_ptr<StreamHandlerError<EncodableValue>>
+        {
+          return plugin_pointer->OnListen(arguments, move(events));
+        },
+        [plugin_pointer = plugin.get()](const EncodableValue *arguments)
+            -> unique_ptr<StreamHandlerError<EncodableValue>>
+        {
+          return plugin_pointer->OnCancel(arguments);
+        });
+
+    eventChannel->SetStreamHandler(move(eventsHandler));
+
+    registrar->AddPlugin(move(plugin));
   }
 
   WireguardFlutterPlugin::WireguardFlutterPlugin() {}
 
   WireguardFlutterPlugin::~WireguardFlutterPlugin() {}
 
-  void WireguardFlutterPlugin::HandleMethodCall(const flutter::MethodCall<flutter::EncodableValue> &call,
-                                                std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result)
+  void WireguardFlutterPlugin::HandleMethodCall(const MethodCall<EncodableValue> &call,
+                                                unique_ptr<MethodResult<EncodableValue>> result)
   {
-    const auto *args = std::get_if<flutter::EncodableMap>(call.arguments());
+    const auto *args = get_if<EncodableMap>(call.arguments());
 
     if (call.method_name() == "initialize")
     {
-      const auto *arg_service_name = std::get_if<std::string>(ValueOrNull(*args, "win32ServiceName"));
-      if (arg_service_name == nullptr)
+      const auto *arg_service_name = get_if<string>(ValueOrNull(*args, "win32ServiceName"));
+      if (arg_service_name == NULL)
       {
         result->Error("Argument 'win32ServiceName' is required");
         return;
       }
-      this->tunnel_service_ = std::make_unique<ServiceControl>(Utf8ToWide(*arg_service_name));
-
-      // Disable packet forwarding that conflicts with WireGuard
-      ServiceControl remoteAccessService = ServiceControl(L"RemoteAccess");
-      try
+      if (this->tunnel_service_ != nullptr)
       {
-        remoteAccessService.Stop();
+        this->tunnel_service_->service_name_ = Utf8ToWide(*arg_service_name);
       }
-      catch (std::exception &e)
+      else
       {
-        result->Error(std::string("Could not stop packet forwarding: ").append(e.what()));
-        return;
-      }
-      try
-      {
-        remoteAccessService.Disable();
-      }
-      catch (std::exception &e)
-      {
-        result->Error(std::string("Could not disable packet forwarding: ").append(e.what()));
-        return;
+        this->tunnel_service_ = make_unique<ServiceControl>(Utf8ToWide(*arg_service_name));
+        this->tunnel_service_->RegisterListener(move(events_));
       }
 
       result->Success();
       return;
     }
-
-    if (call.method_name() == "start")
+    else if (call.method_name() == "start")
     {
       auto tunnel_service = this->tunnel_service_.get();
       if (tunnel_service == nullptr)
@@ -85,34 +94,36 @@ namespace wireguard_flutter
         result->Error("Invalid state: call 'initialize' first");
         return;
       }
-      const auto *wgQuickConfig = std::get_if<std::string>(ValueOrNull(*args, "wgQuickConfig"));
-      if (wgQuickConfig == nullptr)
+      const auto *wgQuickConfig = get_if<string>(ValueOrNull(*args, "wgQuickConfig"));
+      if (wgQuickConfig == NULL)
       {
         result->Error("Argument 'wgQuickConfig' is required");
         return;
       }
 
-      std::wstring wg_config_filename;
+      this->tunnel_service_->EmitState("prepare");
+
+      wstring wg_config_filename;
       try
       {
         wg_config_filename = WriteConfigToTempFile(*wgQuickConfig);
       }
-      catch (std::exception &e)
+      catch (exception &e)
       {
-        result->Error(std::string("Could not write wireguard config: ").append(e.what()));
+        this->tunnel_service_->EmitState("no_connection");
+        result->Error(string("Could not write wireguard config: ").append(e.what()));
         return;
       }
 
       wchar_t module_filename[MAX_PATH];
       GetModuleFileName(NULL, module_filename, MAX_PATH);
-      auto current_exec_dir = std::wstring(module_filename);
+      auto current_exec_dir = wstring(module_filename);
       current_exec_dir = current_exec_dir.substr(0, current_exec_dir.find_last_of(L"\\/"));
-      std::wcout << current_exec_dir << std::endl;
-      std::wostringstream service_exec_builder;
+      wostringstream service_exec_builder;
       service_exec_builder << current_exec_dir << "\\wireguard_svc.exe" << L" -service"
                            << L" -config-file=\"" << wg_config_filename << "\"";
-      std::wstring service_exec = service_exec_builder.str();
-      std::wcout << service_exec << std::endl;
+      wstring service_exec = service_exec_builder.str();
+      cout << "Starting service with command line: " << WideToAnsi(service_exec) << endl;
       try
       {
         CreateArgs csa;
@@ -120,35 +131,23 @@ namespace wireguard_flutter
         csa.executable_and_args = service_exec;
         csa.dependencies = L"Nsi\0TcpIp\0";
 
-        tunnel_service->Create(csa);
-        std::wcout << "create tunnel" << std::endl;
+        tunnel_service->CreateAndStart(csa);
       }
-      catch (const std::exception &e)
+      catch (exception &e)
       {
-        result->Error(std::string("Could not create tunnel: ").append(e.what()));
-        return;
-      }
-
-      try
-      {
-        tunnel_service->Start();
-      }
-      catch (std::exception &e)
-      {
-        result->Error(std::string("Could not start tunnel: ").append(e.what()));
+        result->Error(string(e.what()));
         return;
       }
 
       result->Success();
       return;
     }
-
-    if (call.method_name() == "stop")
+    else if (call.method_name() == "stop")
     {
       auto tunnel_service = this->tunnel_service_.get();
       if (tunnel_service == nullptr)
       {
-        result->Error("Invalid state: call 'setupTunnel' first");
+        result->Error("Invalid state: call 'initialize' first");
         return;
       }
 
@@ -156,24 +155,57 @@ namespace wireguard_flutter
       {
         tunnel_service->Stop();
       }
-      catch (std::exception &e)
+      catch (exception &e)
       {
-        result->Error(std::string("Could not stop tunnel").append(e.what()));
-        return;
+        result->Error(string(e.what()));
       }
 
       result->Success();
       return;
     }
-
-    if (call.method_name() == "stage")
+    else if (call.method_name() == "stage")
     {
-      // TODO: implement
-      result->Success();
+      auto tunnel_service = this->tunnel_service_.get();
+      if (tunnel_service == nullptr)
+      {
+        result->Error("Invalid state: call 'initialize' first");
+        return;
+      }
+
+      result->Success(tunnel_service->GetStatus());
       return;
     }
 
     result->NotImplemented();
+  }
+
+  unique_ptr<StreamHandlerError<EncodableValue>> WireguardFlutterPlugin::OnListen(
+      const EncodableValue *arguments,
+      unique_ptr<EventSink<EncodableValue>> &&events)
+  {
+    events_ = move(events);
+    auto tunnel_service = this->tunnel_service_.get();
+    if (tunnel_service != nullptr)
+    {
+      tunnel_service->RegisterListener(move(events_));
+      return nullptr;
+    }
+
+    return nullptr;
+  }
+
+  unique_ptr<StreamHandlerError<EncodableValue>> WireguardFlutterPlugin::OnCancel(
+      const EncodableValue *arguments)
+  {
+    events_ = nullptr;
+    auto tunnel_service = this->tunnel_service_.get();
+    if (tunnel_service != nullptr)
+    {
+      tunnel_service->UnregisterListener();
+      return nullptr;
+    }
+
+    return nullptr;
   }
 
 } // namespace wireguard_flutter

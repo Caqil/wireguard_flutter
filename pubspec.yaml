@@ -11,7 +11,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  path_provider: ^2.1.2
   plugin_platform_interface: ^2.0.2
+  process_run: ^0.14.0+1
 
 dev_dependencies:
   flutter_test:
@@ -32,3 +34,5 @@ flutter:
         sharedDarwinSource: true
       windows:
         pluginClass: WireguardFlutterPluginCApi
+      linux:
+        dartPluginClass: WireGuardFlutter
