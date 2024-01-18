@@ -33,6 +33,12 @@ class _MyAppState extends State<MyApp> {
     super.initState();
     wireguard.vpnStageSnapshot.listen((event) {
       debugPrint("status changed $event");
+      if (mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('status changed: $event'),
+        ));
+      }
     });
     name = 'wg_vpn';
   }
@@ -66,11 +72,16 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
-  void getStatus() {
+  void getStatus() async {
     debugPrint("getting stage");
-    wireguard.stage().then((value) {
-      debugPrint("stage $value");
-    });
+    final stage = await wireguard.stage();
+    debugPrint("stage: $stage");
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('stage: $stage'),
+      ));
+    }
   }
 
   @override
