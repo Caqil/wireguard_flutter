@@ -14,6 +14,7 @@ namespace wireguard_flutter {
 
 struct CreateArgs {
   std::wstring description, executable_and_args, dependencies;
+  bool first_time;
 };
 
 class ServiceControl {

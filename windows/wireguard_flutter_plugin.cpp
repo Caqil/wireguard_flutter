@@ -130,6 +130,7 @@ namespace wireguard_flutter
         csa.description = tunnel_service->service_name_ + L" WireGuard tunnel";
         csa.executable_and_args = service_exec;
         csa.dependencies = L"Nsi\0TcpIp\0";
+        csa.first_time = true;
 
         tunnel_service->CreateAndStart(csa);
       }
