@@ -121,21 +121,19 @@ namespace wireguard_flutter
 
     if (!StartService(service, 0, NULL))
     {
-      if (GetLastError() == 1075)
+      std::cout << "Failed to start the service: " << GetLastError() << std::endl;
+
+      if (args.first_time)
       {
-        std::cout << "Service marked for deletion" << std::endl;
+        std::cout << "Trying to delete and recreate the service" << std::endl;
+        EmitState("reconnect");
         DeleteService(service);
         CloseServiceHandle(service);
         CloseServiceHandle(service_manager);
-        if (args.first_time)
-        {
-          EmitState("reconnect");
-          args.first_time = false;
-          CreateAndStart(args);
-          return;
-        }
+        args.first_time = false;
+        CreateAndStart(args);
+        return;
       }
-      std::cout << "Failed to start the service: " << GetLastError() << std::endl;
       CloseServiceHandle(service);
       CloseServiceHandle(service_manager);
       EmitState("denied");
