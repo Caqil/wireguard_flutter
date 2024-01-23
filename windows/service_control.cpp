@@ -121,6 +121,19 @@ namespace wireguard_flutter
 
     if (!StartService(service, 0, NULL))
     {
+      std::cout << "Failed to start the service: " << GetLastError() << std::endl;
+
+      if (args.first_time)
+      {
+        std::cout << "Trying to delete and recreate the service" << std::endl;
+        EmitState("reconnect");
+        DeleteService(service);
+        CloseServiceHandle(service);
+        CloseServiceHandle(service_manager);
+        args.first_time = false;
+        CreateAndStart(args);
+        return;
+      }
       CloseServiceHandle(service);
       CloseServiceHandle(service_manager);
       EmitState("denied");
@@ -317,7 +330,7 @@ namespace wireguard_flutter
   void ServiceControl::UnregisterListener()
   {
     events_ = nullptr;
-    }
+  }
 
   void ServiceControl::EmitState(std::string state)
   {
