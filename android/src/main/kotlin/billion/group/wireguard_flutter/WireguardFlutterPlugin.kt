@@ -53,7 +53,7 @@ class WireguardFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware,
     private val TAG = "NVPN"
     var isVpnChecked = false
     companion object {
-        private var state: String = ""
+        private var state: String = "no_connection"
 
         fun getStatus(): String {
             return state
@@ -141,27 +141,25 @@ class WireguardFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware,
             "initialize" -> setupTunnel(call.argument<String>("localizedDescription").toString(), result)
             "start" -> {
                 connect(call.argument<String>("wgQuickConfig").toString(), result)
-            }
-            "stop" -> {
-                disconnect(result)
-                updateStage("disconnected")
-            }
-            "stage" -> {
-                result.success(getStatus())
+
                 if (!isVpnChecked) {
                     if (isVpnActive()) {
-                        updateStage("connected")
+                        state = "connected"
                         isVpnChecked = true
                         println("VPN is active")
                     } else {
-                        updateStage("disconnected")
+                        state = "disconnected"
                         isVpnChecked = true
                         println("VPN is not active")
                     }
                 }
-
             }
-
+            "stop" -> {
+                disconnect(result)
+            }
+            "stage" -> {
+                result.success(getStatus())
+            }
             "checkPermission" -> {
                 checkPermission()
                 result.success(null)
@@ -170,36 +168,51 @@ class WireguardFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware,
         }
     }
     private fun isVpnActive(): Boolean {
-        val connectivityManager =
-            context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        try {
+            val connectivityManager =
+                context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            val activeNetwork = connectivityManager.activeNetwork
-            val networkCapabilities = connectivityManager.getNetworkCapabilities(activeNetwork)
-            return networkCapabilities?.hasTransport(NetworkCapabilities.TRANSPORT_VPN) == true
-        } else {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                val activeNetwork = connectivityManager.activeNetwork
+                val networkCapabilities = connectivityManager.getNetworkCapabilities(activeNetwork)
+                return networkCapabilities?.hasTransport(NetworkCapabilities.TRANSPORT_VPN) == true
+            } else {
+                return false
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "isVpnActive - ERROR - ${e.message}")
             return false
         }
     }
     private fun updateStage(stage: String?) {
-        val updatedStage = stage ?: "disconnect"
-        vpnStageSink?.success(updatedStage.lowercase(Locale.ROOT))
+        scope.launch(Dispatchers.Main) {
+            val updatedStage = stage ?: "no_connection"
+            state = updatedStage
+            vpnStageSink?.success(updatedStage.lowercase(Locale.ROOT))
+        }
+    }
+    private fun updateStageFromState(state: Tunnel.State) {
+        scope.launch(Dispatchers.Main) {
+            when (state) {
+                Tunnel.State.UP -> updateStage("connected")
+                Tunnel.State.DOWN -> updateStage("disconnected")
+                else -> updateStage("wait_connection")
+            }
+        }
     }
     private fun disconnect(result: Result) {
-        updateStage("disconnected")
         scope.launch(Dispatchers.IO) {
             try {
                 if (futureBackend.await().runningTunnelNames.isEmpty()) {
+                    updateStage("disconnected")
                     throw Exception("Tunnel is not running")
                 }
+                updateStage("disconnecting")
                 futureBackend.await().setState(
                     tunnel(tunnelName) { state ->
                         scope.launch(Dispatchers.Main) {
                             Log.i(TAG, "onStateChange - $state")
-                            channel.invokeMethod(
-                                "onStateChange", state == Tunnel.State.DOWN
-                            )
-                            updateStage("disconnected")
+                            updateStageFromState(state)
                         }
                     }, Tunnel.State.DOWN, config
                 )
@@ -216,24 +229,21 @@ class WireguardFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware,
     }
 
     private fun connect(wgQuickConfig: String, result: Result) {
-        updateStage("connecting")
         scope.launch(Dispatchers.IO) {
             try {
                 if (!havePermission) {
                     checkPermission()
                     throw Exception("Permissions are not given")
                 }
+                updateStage("prepare")
                 val inputStream = ByteArrayInputStream(wgQuickConfig.toByteArray())
                 config = com.wireguard.config.Config.parse(inputStream)
+                updateStage("connecting")
                 futureBackend.await().setState(
                     tunnel(tunnelName) { state ->
                         scope.launch(Dispatchers.Main) {
                             Log.i(TAG, "onStateChange - $state")
-                            updateStage("connected")
-                            channel.invokeMethod(
-                                "onStateChange", state == Tunnel.State.UP
-                            )
-                            updateStage("connected")
+                            updateStageFromState(state)
                         }
                     }, Tunnel.State.UP, config
                 )
