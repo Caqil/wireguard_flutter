@@ -40,13 +40,13 @@ class _MyAppState extends State<MyApp> {
         ));
       }
     });
-    name = 'wg_vpn';
+    name = 'my_wg_vpn';
   }
 
   Future<void> initialize() async {
     try {
       await wireguard.initialize(interfaceName: name);
-      debugPrint("initialize success");
+      debugPrint("initialize success $name");
     } catch (error, stack) {
       debugPrint("failed to initialize: $error\n$stack");
     }
