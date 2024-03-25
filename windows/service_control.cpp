@@ -150,8 +150,8 @@ namespace wireguard_flutter
     dwWaitTime = ssStatus.dwWaitHint / 10;
     if (dwWaitTime < 1000)
       dwWaitTime = 1000;
-    else if (dwWaitTime > 10000)
-      dwWaitTime = 10000;
+    else if (dwWaitTime > 1500)
+      dwWaitTime = 1500;
     Sleep(dwWaitTime);
 
     // If the service is too old, it may fail to start and needs to be recreated.
