@@ -71,6 +71,7 @@ namespace wireguard_flutter
       {
         CloseServiceHandle(service_manager);
         EmitState("denied");
+        std::cout << "wireguard_flutter: Failed to create the service" << GetLastError() << std::endl;
         throw ServiceControlException("Failed to create the service", GetLastError());
       }
     }
@@ -81,6 +82,7 @@ namespace wireguard_flutter
       CloseServiceHandle(service);
       CloseServiceHandle(service_manager);
       EmitState("denied");
+      std::cout << "wireguard_flutter: Failed to configure servivce SID type" << GetLastError() << std::endl;
       throw ServiceControlException("Failed to configure servivce SID type", GetLastError());
     }
 
@@ -90,6 +92,7 @@ namespace wireguard_flutter
       CloseServiceHandle(service);
       CloseServiceHandle(service_manager);
       EmitState("denied");
+      std::cout << "wireguard_flutter: Failed to configure service description" << GetLastError() << std::endl;
       throw ServiceControlException("Failed to configure service description", GetLastError());
     }
 
@@ -106,6 +109,7 @@ namespace wireguard_flutter
       CloseServiceHandle(service);
       CloseServiceHandle(service_manager);
       EmitState("denied");
+      std::cout << "wireguard_flutter: Failed to query service status" << GetLastError() << std::endl;
       return;
     }
 
@@ -114,6 +118,7 @@ namespace wireguard_flutter
       CloseServiceHandle(service);
       CloseServiceHandle(service_manager);
       EmitState("connected");
+      std::cout << "wireguard_flutter: Service is already running" << GetLastError() << std::endl;
       return;
     }
 
@@ -121,11 +126,11 @@ namespace wireguard_flutter
 
     if (!StartService(service, 0, NULL))
     {
-      std::cout << "Failed to start the service: " << GetLastError() << std::endl;
+      std::cout << "wireguard_flutter: Failed to start the service: " << GetLastError() << std::endl;
 
       if (args.first_time)
       {
-        std::cout << "Trying to delete and recreate the service" << std::endl;
+        std::cout << "wireguard_flutter: Trying to delete and recreate the service" << std::endl;
         EmitState("reconnect");
         DeleteService(service);
         CloseServiceHandle(service);
@@ -137,7 +142,39 @@ namespace wireguard_flutter
       CloseServiceHandle(service);
       CloseServiceHandle(service_manager);
       EmitState("denied");
+      std::cout << "wireguard_flutter: Failed to start the service" << GetLastError() << std::endl;
       throw ServiceControlException("Failed to start the service", GetLastError());
+    }
+
+    DWORD dwWaitTime;
+    dwWaitTime = ssStatus.dwWaitHint / 10;
+    if (dwWaitTime < 1000)
+      dwWaitTime = 1000;
+    else if (dwWaitTime > 1500)
+      dwWaitTime = 1500;
+    Sleep(dwWaitTime);
+
+    // If the service is too old, it may fail to start and needs to be recreated.
+    // This is done only once. If it fails twice, the error is propagated.
+    if (GetStatus() == "disconnected")
+    {
+      if (args.first_time)
+      {
+        std::cout << "wireguard_flutter: Trying to delete and recreate the service" << std::endl;
+        EmitState("reconnect");
+        DeleteService(service);
+        CloseServiceHandle(service);
+        CloseServiceHandle(service_manager);
+        args.first_time = false;
+        CreateAndStart(args);
+        return;
+      } else {
+        CloseServiceHandle(service);
+        CloseServiceHandle(service_manager);
+        EmitState("denied");
+        std::cout << "wireguard_flutter: Failed to start the service" << GetLastError() << std::endl;
+        throw ServiceControlException("Failed to start the service", GetLastError());
+      }
     }
 
     EmitState("connected");
