@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:flutter/services.dart';
+import 'package:wireguard_flutter/model/stats.dart';
 
 import 'wireguard_flutter_platform_interface.dart';
 
@@ -57,4 +60,15 @@ class WireGuardFlutterMethodChannel extends WireGuardFlutterInterface {
               )
             : VpnStage.disconnected,
       );
+
+  @override
+  Future<Stats?> getStats() async {
+    try {
+      final result = await _methodChannel.invokeMethod('getStats');
+      final stats = Stats.fromJson(jsonDecode(result));
+      return stats;
+    } on Exception catch (e) {
+      throw Exception(e);
+    }
+  }
 }

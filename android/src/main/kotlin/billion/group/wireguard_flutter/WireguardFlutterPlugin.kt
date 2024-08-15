@@ -135,12 +135,11 @@ class WireguardFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware,
         }
     }
 
-    override fun onMethodCall(call: MethodCall, result: Result) {
-
+    override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         when (call.method) {
-            "initialize" -> setupTunnel(call.argument<String>("localizedDescription").toString(), result)
+            "initialize" -> setupTunnel(call.argument<String>("localizedDescription") ?: "", result)
             "start" -> {
-                connect(call.argument<String>("wgQuickConfig").toString(), result)
+                connect(call.argument<String>("wgQuickConfig") ?: "", result)
 
                 if (!isVpnChecked) {
                     if (isVpnActive()) {
@@ -163,6 +162,13 @@ class WireguardFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware,
             "checkPermission" -> {
                 checkPermission()
                 result.success(null)
+            }
+            "getStats" -> {
+                if(tunnelName.isEmpty()){
+                    flutterError(result, "Invalid argument type for tunnel name")
+                }else{
+                    handleGetStats(result)
+                }
             }
             else -> flutterNotImplemented(result)
         }
@@ -281,6 +287,38 @@ class WireguardFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware,
         }
     }
 
+    private fun handleGetStats(result: MethodChannel.Result) {
+
+        if (tunnelName.isEmpty()) {
+            flutterError(result, "Provide tunnel name to get statistics")
+            return
+        }
+
+        scope.launch(Dispatchers.IO) {
+            try {
+                val stats = futureBackend.await().getStatistics(tunnel(tunnelName))
+
+                var latestHandshake = 0L
+
+                for (key in stats.peers()) {
+                    val peerStats = stats.peer(key)
+                    if (peerStats != null && peerStats.latestHandshakeEpochMillis > latestHandshake) {
+                        latestHandshake = peerStats.latestHandshakeEpochMillis
+                    }
+                }
+                flutterSuccess(result, Klaxon().toJsonString(
+                    Stats(stats.totalRx(), stats.totalTx(), latestHandshake)
+                ))
+            } catch (e: BackendException) {
+                Log.e(TAG, "handleGetStats - BackendException - ERROR - ${e.reason}")
+                flutterError(result, e.reason.toString())
+            } catch (e: Throwable) {
+                Log.e(TAG, "handleGetStats - Can't get stats: $e")
+                flutterError(result, e.message.toString())
+            }
+        }
+    }
+
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         channel.setMethodCallHandler(null)
         events.setStreamHandler(null)
@@ -309,3 +347,8 @@ class WireGuardTunnel(
 
 }
 
+class Stats(
+    val totalDownload: Long,
+    val totalUpload: Long,
+    val lastHandshake: Long
+)
