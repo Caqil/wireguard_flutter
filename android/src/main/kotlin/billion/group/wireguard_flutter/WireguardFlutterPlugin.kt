@@ -1,6 +1,5 @@
 package billion.group.wireguard_flutter
 
-
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
@@ -164,9 +163,16 @@ class WireguardFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware,
                 checkPermission()
                 result.success(null)
             }
+            "getDownloadData" -> {
+                getDownloadData(result)
+            }
+            "getUploadData" -> {
+                getUploadData(result)
+            }
             else -> flutterNotImplemented(result)
         }
     }
+
     private fun isVpnActive(): Boolean {
         try {
             val connectivityManager =
@@ -184,6 +190,7 @@ class WireguardFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware,
             return false
         }
     }
+
     private fun updateStage(stage: String?) {
         scope.launch(Dispatchers.Main) {
             val updatedStage = stage ?: "no_connection"
@@ -191,6 +198,7 @@ class WireguardFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware,
             vpnStageSink?.success(updatedStage.lowercase(Locale.ROOT))
         }
     }
+
     private fun updateStageFromState(state: Tunnel.State) {
         scope.launch(Dispatchers.Main) {
             when (state) {
@@ -200,6 +208,7 @@ class WireguardFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware,
             }
         }
     }
+
     private fun disconnect(result: Result) {
         scope.launch(Dispatchers.IO) {
             try {
@@ -281,6 +290,30 @@ class WireguardFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware,
         }
     }
 
+    private fun getDownloadData(result: Result) {
+        scope.launch(Dispatchers.IO) {
+            try {
+                val downloadData = futureBackend.await().getTransferData(tunnel(tunnelName)).rxBytes
+                flutterSuccess(result, downloadData)
+            } catch (e: Throwable) {
+                Log.e(TAG, "getDownloadData - ERROR - ${e.message}")
+                flutterError(result, e.message.toString())
+            }
+        }
+    }
+
+    private fun getUploadData(result: Result) {
+        scope.launch(Dispatchers.IO) {
+            try {
+                val uploadData = futureBackend.await().getTransferData(tunnel(tunnelName)).txBytes
+                flutterSuccess(result, uploadData)
+            } catch (e: Throwable) {
+                Log.e(TAG, "getUploadData - ERROR - ${e.message}")
+                flutterError(result, e.message.toString())
+            }
+        }
+    }
+
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         channel.setMethodCallHandler(null)
         events.setStreamHandler(null)
@@ -308,4 +341,3 @@ class WireGuardTunnel(
     }
 
 }
-
