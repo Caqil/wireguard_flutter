@@ -11,6 +11,7 @@ import io.flutter.plugin.common.PluginRegistry
 
 import android.app.Activity
 import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.android.FlutterFragmentActivity
 import android.content.Intent
 import android.content.Context
 import android.net.ConnectivityManager
@@ -24,7 +25,6 @@ import com.wireguard.crypto.KeyPair
 import io.flutter.plugin.common.EventChannel
 import kotlinx.coroutines.*
 import java.util.*
-
 
 import kotlinx.coroutines.launch
 import java.io.ByteArrayInputStream
@@ -51,6 +51,7 @@ class WireguardFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware,
     private var tunnel: WireGuardTunnel? = null
     private val TAG = "NVPN"
     var isVpnChecked = false
+
     companion object {
         private var state: String = "no_connection"
 
@@ -58,6 +59,7 @@ class WireguardFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware,
             return state
         }
     }
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
         this.havePermission =
             (requestCode == PERMISSIONS_REQUEST_CODE) && (resultCode == Activity.RESULT_OK)
@@ -65,7 +67,11 @@ class WireguardFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware,
     }
 
     override fun onAttachedToActivity(activityPluginBinding: ActivityPluginBinding) {
-        this.activity = activityPluginBinding.activity as FlutterActivity
+        if (activityPluginBinding.activity is FlutterFragmentActivity) {
+            this.activity = activityPluginBinding.activity as FlutterFragmentActivity
+        } else if (activityPluginBinding.activity is FlutterActivity) {
+            this.activity = activityPluginBinding.activity as FlutterActivity
+        }
     }
 
     override fun onDetachedFromActivityForConfigChanges() {
@@ -73,7 +79,11 @@ class WireguardFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware,
     }
 
     override fun onReattachedToActivityForConfigChanges(activityPluginBinding: ActivityPluginBinding) {
-        this.activity = activityPluginBinding.activity as FlutterActivity
+        if (activityPluginBinding.activity is FlutterFragmentActivity) {
+            this.activity = activityPluginBinding.activity as FlutterFragmentActivity
+        } else if (activityPluginBinding.activity is FlutterActivity) {
+            this.activity = activityPluginBinding.activity as FlutterActivity
+        }
     }
 
     override fun onDetachedFromActivity() {
