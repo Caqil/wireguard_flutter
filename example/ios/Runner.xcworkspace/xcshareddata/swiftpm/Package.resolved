@@ -1,14 +1,41 @@
 {
+  "originHash" : "22fe370d7e3e35420aca8972ac685852f6fc72e9325b3f95ae25b04abe7bd2ba",
   "pins" : [
+    {
+      "identity" : "openssl-apple",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/passepartoutvpn/openssl-apple",
+      "state" : {
+        "revision" : "0edc07c7a0e4ec2ca0f448dd68314241ccc925b3",
+        "version" : "3.2.107"
+      }
+    },
+    {
+      "identity" : "swiftybeaver",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/SwiftyBeaver/SwiftyBeaver",
+      "state" : {
+        "revision" : "8cba041db09596183331d123f337d0eb2e6e8e91",
+        "version" : "2.1.1"
+      }
+    },
+    {
+      "identity" : "tunnelkit-master",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/Caqil/tunnelkit-master.git",
+      "state" : {
+        "branch" : "main",
+        "revision" : "2a99f7c57471551905c4102b4d44cf190ecb5f55"
+      }
+    },
     {
       "identity" : "wireguard-apple",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/passepartoutvpn/wireguard-apple",
       "state" : {
-        "revision" : "73d9152fa0cb661db0348a1ac11dbbf998422a50",
-        "version" : "1.0.17"
+        "revision" : "b79f0f150356d8200a64922ecf041dd020140aa0"
       }
     }
   ],
-  "version" : 2
+  "version" : 3
 }

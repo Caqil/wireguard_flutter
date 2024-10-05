@@ -14,11 +14,14 @@
 		97C146FC1CF9000F007C117D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FA1CF9000F007C117D /* Main.storyboard */; };
 		97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FD1CF9000F007C117D /* Assets.xcassets */; };
 		97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */; };
-		A261D91C2B2FF779008AD726 /* WireGuardKit in Frameworks */ = {isa = PBXBuildFile; productRef = A261D91B2B2FF779008AD726 /* WireGuardKit */; };
 		A261D9BA2B30021F008AD726 /* NetworkExtension.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A261D9032B2FF657008AD726 /* NetworkExtension.framework */; };
 		A261D9BD2B30021F008AD726 /* PacketTunnelProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A261D9BC2B30021F008AD726 /* PacketTunnelProvider.swift */; };
 		A261D9C22B30021F008AD726 /* WGExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A261D9B92B30021F008AD726 /* WGExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		A261D9CA2B3002E3008AD726 /* WireGuardKit in Frameworks */ = {isa = PBXBuildFile; productRef = A261D9C92B3002E3008AD726 /* WireGuardKit */; };
+		A29D67192C512DB1007BDB07 /* TunnelKit in Frameworks */ = {isa = PBXBuildFile; productRef = A29D67182C512DB1007BDB07 /* TunnelKit */; };
+		A29D671B2C512DB1007BDB07 /* TunnelKitLZO in Frameworks */ = {isa = PBXBuildFile; productRef = A29D671A2C512DB1007BDB07 /* TunnelKitLZO */; };
+		A29D671D2C512DB1007BDB07 /* TunnelKitWireGuard in Frameworks */ = {isa = PBXBuildFile; productRef = A29D671C2C512DB1007BDB07 /* TunnelKitWireGuard */; };
+		A29D671F2C512DB1007BDB07 /* TunnelKitWireGuardAppExtension in Frameworks */ = {isa = PBXBuildFile; productRef = A29D671E2C512DB1007BDB07 /* TunnelKitWireGuardAppExtension */; };
+		A29D67212C512DB7007BDB07 /* TunnelKitWireGuardAppExtension in Frameworks */ = {isa = PBXBuildFile; productRef = A29D67202C512DB7007BDB07 /* TunnelKitWireGuardAppExtension */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -93,8 +96,11 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A261D91C2B2FF779008AD726 /* WireGuardKit in Frameworks */,
 				326F70F9F49C247814E0F596 /* Pods_Runner.framework in Frameworks */,
+				A29D671B2C512DB1007BDB07 /* TunnelKitLZO in Frameworks */,
+				A29D671F2C512DB1007BDB07 /* TunnelKitWireGuardAppExtension in Frameworks */,
+				A29D671D2C512DB1007BDB07 /* TunnelKitWireGuard in Frameworks */,
+				A29D67192C512DB1007BDB07 /* TunnelKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -102,7 +108,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A261D9CA2B3002E3008AD726 /* WireGuardKit in Frameworks */,
+				A29D67212C512DB7007BDB07 /* TunnelKitWireGuardAppExtension in Frameworks */,
 				A261D9BA2B30021F008AD726 /* NetworkExtension.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -197,7 +203,7 @@
 			buildPhases = (
 			);
 			buildToolPath = /usr/bin/make;
-			buildWorkingDirectory = "/Users/cakra/Documents/app/wireguard-apple-master/Sources/WireGuardKitGo";
+			buildWorkingDirectory = "/Users/cakra/Documents/app/wireguard-apple/Sources/WireGuardKitGo";
 			dependencies = (
 			);
 			name = tun;
@@ -228,7 +234,10 @@
 			);
 			name = Runner;
 			packageProductDependencies = (
-				A261D91B2B2FF779008AD726 /* WireGuardKit */,
+				A29D67182C512DB1007BDB07 /* TunnelKit */,
+				A29D671A2C512DB1007BDB07 /* TunnelKitLZO */,
+				A29D671C2C512DB1007BDB07 /* TunnelKitWireGuard */,
+				A29D671E2C512DB1007BDB07 /* TunnelKitWireGuardAppExtension */,
 			);
 			productName = Runner;
 			productReference = 97C146EE1CF9000F007C117D /* Runner.app */;
@@ -249,7 +258,7 @@
 			);
 			name = WGExtension;
 			packageProductDependencies = (
-				A261D9C92B3002E3008AD726 /* WireGuardKit */,
+				A29D67202C512DB7007BDB07 /* TunnelKitWireGuardAppExtension */,
 			);
 			productName = WGExtension;
 			productReference = A261D9B92B30021F008AD726 /* WGExtension.appex */;
@@ -263,7 +272,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastSwiftUpdateCheck = 1500;
-				LastUpgradeCheck = 1430;
+				LastUpgradeCheck = 1510;
 				ORGANIZATIONNAME = "";
 				TargetAttributes = {
 					97C146ED1CF9000F007C117D = {
@@ -288,7 +297,7 @@
 			);
 			mainGroup = 97C146E51CF9000F007C117D;
 			packageReferences = (
-				A261D91A2B2FF779008AD726 /* XCRemoteSwiftPackageReference "wireguard-apple" */,
+				A29D67172C512DB1007BDB07 /* XCRemoteSwiftPackageReference "tunnelkit-master" */,
 			);
 			productRefGroup = 97C146EF1CF9000F007C117D /* Products */;
 			projectDirPath = "";
@@ -489,7 +498,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = iphoneos;
@@ -570,7 +579,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
@@ -619,7 +628,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = iphoneos;
@@ -917,26 +926,41 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		A261D91A2B2FF779008AD726 /* XCRemoteSwiftPackageReference "wireguard-apple" */ = {
+		A29D67172C512DB1007BDB07 /* XCRemoteSwiftPackageReference "tunnelkit-master" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/passepartoutvpn/wireguard-apple";
+			repositoryURL = "https://github.com/Caqil/tunnelkit-master.git";
 			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.0.17;
+				branch = main;
+				kind = branch;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		A261D91B2B2FF779008AD726 /* WireGuardKit */ = {
+		A29D67182C512DB1007BDB07 /* TunnelKit */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = A261D91A2B2FF779008AD726 /* XCRemoteSwiftPackageReference "wireguard-apple" */;
-			productName = WireGuardKit;
+			package = A29D67172C512DB1007BDB07 /* XCRemoteSwiftPackageReference "tunnelkit-master" */;
+			productName = TunnelKit;
 		};
-		A261D9C92B3002E3008AD726 /* WireGuardKit */ = {
+		A29D671A2C512DB1007BDB07 /* TunnelKitLZO */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = A261D91A2B2FF779008AD726 /* XCRemoteSwiftPackageReference "wireguard-apple" */;
-			productName = WireGuardKit;
+			package = A29D67172C512DB1007BDB07 /* XCRemoteSwiftPackageReference "tunnelkit-master" */;
+			productName = TunnelKitLZO;
+		};
+		A29D671C2C512DB1007BDB07 /* TunnelKitWireGuard */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A29D67172C512DB1007BDB07 /* XCRemoteSwiftPackageReference "tunnelkit-master" */;
+			productName = TunnelKitWireGuard;
+		};
+		A29D671E2C512DB1007BDB07 /* TunnelKitWireGuardAppExtension */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A29D67172C512DB1007BDB07 /* XCRemoteSwiftPackageReference "tunnelkit-master" */;
+			productName = TunnelKitWireGuardAppExtension;
+		};
+		A29D67202C512DB7007BDB07 /* TunnelKitWireGuardAppExtension */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A29D67172C512DB1007BDB07 /* XCRemoteSwiftPackageReference "tunnelkit-master" */;
+			productName = TunnelKitWireGuardAppExtension;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

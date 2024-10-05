@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:wireguard_flutter/wireguard_flutter.dart';
 
 void main() {
@@ -25,12 +26,15 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   final wireguard = WireGuardFlutter.instance;
-
+  final WireguardService _wireguardService = WireguardService();
+  String _downloadCount = 'N/A';
+  String _uploadCount = 'N/A';
   late String name;
 
   @override
   void initState() {
     super.initState();
+    _getWireGuardDataCounts();
     wireguard.vpnStageSnapshot.listen((event) {
       debugPrint("status changed $event");
       if (mounted) {
@@ -49,6 +53,18 @@ class _MyAppState extends State<MyApp> {
       debugPrint("initialize success $name");
     } catch (error, stack) {
       debugPrint("failed to initialize: $error\n$stack");
+    }
+  }
+
+  void _getWireGuardDataCounts() async {
+    try {
+      final dataCounts = await _wireguardService.getDataCounts();
+      setState(() {
+        _downloadCount = dataCounts['download'].toString();
+        _uploadCount = dataCounts['upload'].toString();
+      });
+    } catch (e) {
+      print('Failed to get data counts: $e');
     }
   }
 
@@ -97,12 +113,11 @@ class _MyAppState extends State<MyApp> {
           TextButton(
             onPressed: initialize,
             style: ButtonStyle(
-                minimumSize:
-                    MaterialStateProperty.all<Size>(const Size(100, 50)),
-                padding: MaterialStateProperty.all(
+                minimumSize: WidgetStateProperty.all<Size>(const Size(100, 50)),
+                padding: WidgetStateProperty.all(
                     const EdgeInsets.fromLTRB(20, 15, 20, 15)),
                 backgroundColor:
-                    MaterialStateProperty.all<Color>(Colors.blueAccent),
+                    WidgetStateProperty.all<Color>(Colors.blueAccent),
                 overlayColor: MaterialStateProperty.all<Color>(
                     Colors.white.withOpacity(0.1))),
             child: const Text(
@@ -131,13 +146,12 @@ class _MyAppState extends State<MyApp> {
           TextButton(
             onPressed: disconnect,
             style: ButtonStyle(
-                minimumSize:
-                    MaterialStateProperty.all<Size>(const Size(100, 50)),
-                padding: MaterialStateProperty.all(
+                minimumSize: WidgetStateProperty.all<Size>(const Size(100, 50)),
+                padding: WidgetStateProperty.all(
                     const EdgeInsets.fromLTRB(20, 15, 20, 15)),
                 backgroundColor:
-                    MaterialStateProperty.all<Color>(Colors.blueAccent),
-                overlayColor: MaterialStateProperty.all<Color>(
+                    WidgetStateProperty.all<Color>(Colors.blueAccent),
+                overlayColor: WidgetStateProperty.all<Color>(
                     Colors.white.withOpacity(0.1))),
             child: const Text(
               'Disconnect',
@@ -148,19 +162,30 @@ class _MyAppState extends State<MyApp> {
           TextButton(
             onPressed: getStatus,
             style: ButtonStyle(
-                minimumSize:
-                    MaterialStateProperty.all<Size>(const Size(100, 50)),
-                padding: MaterialStateProperty.all(
+                minimumSize: WidgetStateProperty.all<Size>(const Size(100, 50)),
+                padding: WidgetStateProperty.all(
                     const EdgeInsets.fromLTRB(20, 15, 20, 15)),
                 backgroundColor:
-                    MaterialStateProperty.all<Color>(Colors.blueAccent),
-                overlayColor: MaterialStateProperty.all<Color>(
+                    WidgetStateProperty.all<Color>(Colors.blueAccent),
+                overlayColor: WidgetStateProperty.all<Color>(
                     Colors.white.withOpacity(0.1))),
             child: const Text(
               'Get status',
               style: TextStyle(color: Colors.white),
             ),
           ),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text('Download: $_downloadCount'),
+              Text('Upload: $_uploadCount'),
+              ElevatedButton(
+                onPressed: _getWireGuardDataCounts,
+                child: const Text('Refresh Data Counts'),
+              ),
+            ],
+          )
         ],
       ),
     );
@@ -168,14 +193,26 @@ class _MyAppState extends State<MyApp> {
 }
 
 const String conf = '''[Interface]
-PrivateKey = 0IZmHsxiNQ54TsUs0EQ71JNsa5f70zVf1LmDvON1CXc=
-Address = 10.8.0.4/32
-DNS = 1.1.1.1
-
-
+Address = 192.168.6.163/32
+DNS = 1.1.1.1,8.8.8.8
+PrivateKey = mBVsI8hk7a1JPJqXuVELOTnSSI2tL6Q4HamW5gxEgEk=
 [Peer]
-PublicKey = 6uZg6T0J1bHuEmdqPx8OmxQ2ebBJ8TnVpnCdV8jHliQ=
-PresharedKey = As6JiXcYcqwjSHxSOrmQT13uGVlBG90uXZWmtaezZVs=
+publickey=MKxF3963hjD/MLGSIcGRLaco/N5uDN/Dslt/k675Knc=
 AllowedIPs = 0.0.0.0/0, ::/0
-PersistentKeepalive = 0
-Endpoint = 38.180.13.85:51820''';
+Endpoint = indo7.vpnjantit.com:1024
+''';
+
+class WireguardService {
+  static const platform =
+      MethodChannel('billion.group.wireguard_flutter/wgcontrol');
+
+  Future<Map<String, int>> getDataCounts() async {
+    try {
+      final Map<dynamic, dynamic> result =
+          await platform.invokeMethod('getDataCounts');
+      return Map<String, int>.from(result);
+    } catch (e) {
+      throw 'Failed to get data counts: $e';
+    }
+  }
+}
