@@ -281,14 +281,30 @@ class WireguardFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware,
     }
 
     private fun checkPermission() {
-        val intent = GoBackend.VpnService.prepare(this.activity)
+    try {
+        // Use application context instead of activity
+        val intent = android.net.VpnService.prepare(context)
+        
         if (intent != null) {
             havePermission = false
-            this.activity?.startActivityForResult(intent, PERMISSIONS_REQUEST_CODE)
+            // Launch on main thread with null safety
+            scope.launch(Dispatchers.Main) {
+                if (activity != null) {
+                    activity?.startActivityForResult(intent, PERMISSIONS_REQUEST_CODE)
+                    Log.d(TAG, "VPN permission requested")
+                } else {
+                    Log.e(TAG, "Activity null, cannot request permission")
+                }
+            }
         } else {
             havePermission = true
+            Log.d(TAG, "VPN permission already granted")
         }
+    } catch (e: Exception) {
+        Log.e(TAG, "Error checking permission: ${e.message}", e)
+        havePermission = false
     }
+}
 
     private fun getDownloadData(result: Result) {
         scope.launch(Dispatchers.IO) {
